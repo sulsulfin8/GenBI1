@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM GenBI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563eb', // Warna biru utama
+                        'bg-main': '#f0f5ff', // Background utama konten (kebiruan)
+                        'text-gray': '#a3aed1',
+                        'success-green': '#00c48c'
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px 0 rgba(0,0,0,0.03)',
+                        'blue-glow': '0 10px 15px -3px rgba(37, 99, 235, 0.3)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-bg-main font-sans flex min-h-screen text-gray-800">
+
+    <aside class="w-64 bg-primary-blue flex flex-col justify-between z-10 shadow-xl">
+        <div>
+            <div class="p-8 text-2xl font-bold flex items-center gap-3 text-white">
+                <img src="{{ asset('logo_kiri.png') }}" alt="Logo GenBI"
+                    class="w-10 h-10 bg-white rounded-full p-1 shadow-sm object-contain">
+                GenBI
+            </div>
+
+            <p class="px-8 text-xs text-blue-200 mb-4 uppercase tracking-wider">Menu</p>
+            <nav class="space-y-2 flex flex-col px-4">
+                @php
+                    // Class jika menu SEDANG AKTIF
+                    $activeMenu =
+                        'flex items-center px-4 py-3 bg-white text-primary-blue rounded-xl shadow-md font-bold transition';
+
+                    // Class jika menu TIDAK AKTIF
+                    $inactiveMenu =
+                        'flex items-center px-4 py-3 text-blue-100 hover:bg-white/10 hover:text-white rounded-xl transition font-medium';
+                @endphp
+
+                <a href="{{ route('dashboard') }}"
+                    class="{{ request()->routeIs('dashboard') ? $activeMenu : $inactiveMenu }}">
+                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    Dashboard
+                </a>
+
+                @if (in_array(auth()->user()->role, ['admin', 'sekretaris']))
+                    <a href="{{ route('users.index') }}"
+                        class="{{ request()->routeIs('users.*') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                        Kelola User
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'bendahara']))
+                    <a href="{{ route('kegiatan') }}"
+                        class="{{ request()->routeIs('kegiatan') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Kegiatan
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['admin', 'sekretaris']))
+                    <a href="{{ route('absensi') }}"
+                        class="{{ request()->routeIs('absensi') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Absensi
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'anggota']))
+                    <a href="{{ route('poin') }}"
+                        class="{{ request()->routeIs('poin') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Poin Keaktifan
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['admin', 'bendahara']))
+                    <a href="{{ route('anggaran') }}"
+                        class="{{ request()->routeIs('anggaran') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Rancangan Anggaran
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'bendahara']))
+                    <a href="{{ route('laporan') }}"
+                        class="{{ request()->routeIs('laporan') ? $activeMenu : $inactiveMenu }}">
+                        <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Laporan
+                    </a>
+                @endif
+            </nav>
+        </div>
+
+        <div class="p-4 mb-4">
+            <a href="{{ route('logout') }}"
+                class="flex items-center px-4 py-3 text-red-200 hover:bg-red-500 hover:text-white rounded-xl transition font-medium">
+                <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                    </path>
+                </svg>
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <header class="bg-bg-main px-10 py-1 flex items-center justify-end">
+            <div class="flex items-center gap-6">
+
+                @if (auth()->user()->role == 'anggota')
+                    @php
+                        $nim = auth()->user()->nim ?? auth()->user()->username;
+                        $notifikasis = [];
+                        $unreadCount = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasTable('notifikasis')) {
+                            // Mengambil 15 notifikasi terakhir agar bisa di-scroll
+                            $notifikasis = \Illuminate\Support\Facades\DB::table('notifikasis')
+                                ->where('nim', $nim)
+                                ->orderBy('created_at', 'desc')
+                                ->take(15)
+                                ->get();
+                            $unreadCount = \Illuminate\Support\Facades\DB::table('notifikasis')
+                                ->where('nim', $nim)
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+                    <div class="relative group z-[100]">
+                        <button
+                            class="relative bg-white p-2.5 rounded-full shadow-sm text-gray-400 hover:text-primary-blue transition cursor-pointer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                </path>
+                            </svg>
+
+                            @if ($unreadCount > 0)
+                                <span class="absolute top-2 right-2 flex h-2.5 w-2.5">
+                                    <span
+                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span
+                                        class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
+                                </span>
+                            @endif
+                        </button>
+
+                        <div
+                            class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right group-hover:scale-100 scale-95 overflow-hidden flex flex-col">
+
+                            <div
+                                class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/80 flex-shrink-0">
+                                <h3 class="font-extrabold text-gray-800 text-sm">Notifikasi</h3>
+                                @if ($unreadCount > 0)
+                                    <form action="{{ route('notifikasi.read') }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="text-[11px] text-primary-blue hover:text-blue-700 font-bold bg-blue-50 px-2 py-1 rounded-md transition">Tandai
+                                            Dibaca</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="max-h-72 overflow-y-auto flex flex-col">
+                                @forelse($notifikasis as $notif)
+                                    <div
+                                        class="p-4 border-b border-gray-50 flex gap-3 transition {{ $notif->is_read ? 'opacity-60 bg-white hover:bg-gray-50' : 'bg-blue-50/30 hover:bg-blue-50/50' }}">
+                                        <div class="mt-1 flex-shrink-0">
+                                            <div
+                                                class="w-2.5 h-2.5 rounded-full {{ $notif->jenis == 'info' ? 'bg-blue-500' : 'bg-amber-500' }}">
+                                            </div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-gray-700 leading-relaxed font-semibold break-words">
+                                                {{ $notif->pesan }}</p>
+                                            <p
+                                                class="text-[10px] font-bold text-gray-400 mt-1.5 uppercase tracking-wide">
+                                                {{ \Carbon\Carbon::parse($notif->created_at)->diffForHumans() }}</p>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-8 text-center">
+                                        <svg class="w-10 h-10 mx-auto text-gray-200 mb-3" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                            </path>
+                                        </svg>
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Belum Ada
+                                            Notifikasi</p>
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            @if (count($notifikasis) > 0)
+                                <div class="p-2 bg-gray-50 text-center border-t border-gray-100 flex-shrink-0">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Scroll
+                                        untuk melihat riwayat lama</span>
+                                </div>
+                            @endif
+
+                        </div>
+                    </div>
+                @endif
+
+                <a href="{{ route('profile') }}"
+                    class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-2xl transition">
+                    @if (auth()->user()->photo)
+                        <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="User"
+                            class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover object-top">
+                    @else
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=ffedd5&color=ea580c"
+                            alt="User"
+                            class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover object-top">
+                    @endif
+                    <div class="text-sm">
+                        <p class="font-semibold text-gray-700">Hi, {{ auth()->user()->name }}</p>
+                        <p class="text-xs text-gray-400 capitalize">{{ auth()->user()->role }}</p>
+                    </div>
+                </a>
+            </div>
+        </header>
+
+        <div class="px-10 pb-10 overflow-y-auto flex-1">
+            @yield('content')
+        </div>
+    </main>
+
+</body>
+
+</html>
