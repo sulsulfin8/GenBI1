@@ -321,6 +321,54 @@
                                                 </svg>
                                                 Poin
                                             </button>
+
+                                            <button type="button"
+                                                onclick="bukaModalBatalPoin('{{ $data->nim }}', '{{ addslashes($data->nama) }}', '{{ addslashes($data->keterangan ?? '-') }}')"
+                                                title="Batalkan Poin"
+                                                class="flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-md shadow-red-500/30 transition-transform hover:-translate-y-0.5">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                </svg>
+                                                Batal
+                                            </button>
+                                            <div id="modalBatalPoin"
+                                                class="fixed inset-0 z-[60] hidden bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 transition-all">
+                                                <div
+                                                    class="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-modal max-h-[80vh]">
+                                                    <div
+                                                        class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                                        <h3 class="text-lg font-extrabold text-gray-800 leading-tight">
+                                                            Batalkan Poin Spesifik<br>
+                                                            <span id="batalNamaMhs"
+                                                                class="text-red-600 text-xs font-bold bg-red-50 px-2 py-0.5 rounded-lg mt-1 inline-block"></span>
+                                                        </h3>
+                                                        <button onclick="tutupModalBatalPoin()"
+                                                            class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="p-6 overflow-y-auto space-y-3 flex-1 hide-scrollbar">
+                                                        <p
+                                                            class="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                                            Pilih item poin yang ingin dihapus:</p>
+                                                        <div id="daftarPoinBatal" class="space-y-2.5">
+                                                        </div>
+                                                    </div>
+
+                                                    <div
+                                                        class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50/50">
+                                                        <button type="button" onclick="tutupModalBatalPoin()"
+                                                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-xl font-bold transition text-xs">Tutup</button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -668,6 +716,115 @@
                     document.getElementById('inputKeterangan').value = "";
                 }
             }
+            // --- LOGIKA MODAL PEMBATALAN SELEKTIF ---
+            // --- LOGIKA MODAL PEMBATALAN SELEKTIF (VERSI AJAX / TANPA KEDIP) ---
+            let hasPoinChanged = false; // Flag penanda jika ada data yang terhapus
+
+            function bukaModalBatalPoin(nim, nama, keterangan) {
+                document.getElementById('batalNamaMhs').innerText = nama;
+                const container = document.getElementById('daftarPoinBatal');
+                container.innerHTML = "";
+
+                if (!keterangan || keterangan === "-" || keterangan.trim() === "") {
+                    container.innerHTML =
+                        "<p class='italic text-gray-400 text-xs text-center py-6'>Belum ada catatan aktivitas poin manual.</p>";
+                } else {
+                    const splitKet = keterangan.includes('|') ? keterangan.split("|") : [keterangan];
+                    let validItemsCount = 0;
+
+                    splitKet.forEach((item, index) => {
+                        let textItem = item.trim();
+                        if (textItem !== "" && textItem !== "-" && !textItem.includes("Absensi ()")) {
+                            validItemsCount++;
+
+                            let isPlus = textItem.includes('+');
+                            let divItem = document.createElement('div');
+                            divItem.className =
+                                "flex items-center justify-between p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-red-300 transition-all gap-3";
+
+                            // KUNCI PERBAIKAN: Form lama dihapus, diganti jadi tombol pemicu JavaScript
+                            divItem.innerHTML = `
+                                <div class="flex items-center gap-2 max-w-[70%]">
+                                    <span class="w-2 h-2 rounded-full ${isPlus ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'} flex-shrink-0"></span>
+                                    <span class="text-xs font-bold text-gray-700 leading-relaxed">${textItem}</span>
+                                </div>
+                                <button type="button" onclick="hapusItemPoinAjax('${nim}', '${nama}', ${index})" class="px-3 py-1.5 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white rounded-xl text-[11px] font-black transition-all shadow-sm">
+                                    Hapus
+                                </button>
+                            `;
+                            container.appendChild(divItem);
+                        }
+                    });
+
+                    if (validItemsCount === 0) {
+                        container.innerHTML =
+                            "<p class='italic text-gray-400 text-xs text-center py-6'>Belum ada catatan aktivitas poin manual.</p>";
+                    }
+                }
+
+                const modal = document.getElementById('modalBatalPoin');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+
+            // --- FUNGSI BARU: Hapus Data ke Database di Belakang Layar ---
+            function hapusItemPoinAjax(nim, nama, index) {
+                if (!confirm('Apakah Anda yakin ingin membatalkan item poin ini?')) return;
+
+                // Ambil token keamanan Laravel secara otomatis
+                const csrfToken = document.querySelector('input[name="_token"]').value;
+
+                fetch(`{{ url('/poin') }}/${nim}/batal`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json' // Minta Laravel mengembalikan data JSON, bukan memuat halaman
+                        },
+                        body: JSON.stringify({
+                            item_index: index
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            hasPoinChanged = true;
+                            // Perbarui isi popup secara instan tanpa berkedip sedikitpun!
+                            bukaModalBatalPoin(nim, nama, data.new_keterangan);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan koneksi saat menghapus.');
+                    });
+            }
+
+            function tutupModalBatalPoin() {
+                const modal = document.getElementById('modalBatalPoin');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+
+                // Jika selama popup terbuka ada poin yang sempat dihapus, refresh tabel utama HANYA SAAT TOMBOL TUTUP DITEKAN
+                if (hasPoinChanged) {
+                    window.location.reload();
+                }
+            }
+
+            // ==============================================================
+            // KODE OTOMATIS: BUKA KEMBALI POPUP SETELAH HALAMAN REFRESH
+            // ==============================================================
+            @if (session('open_modal_batal_nim'))
+                @foreach ($rekapData as $rd)
+                    @if ($rd->nim == session('open_modal_batal_nim'))
+                        document.addEventListener("DOMContentLoaded", function() {
+                            bukaModalBatalPoin('{{ $rd->nim }}', '{{ addslashes($rd->nama) }}',
+                                '{{ addslashes($rd->keterangan ?? '-') }}');
+                        });
+                    @endif
+                @endforeach
+            @endif
         </script>
     @endif
 

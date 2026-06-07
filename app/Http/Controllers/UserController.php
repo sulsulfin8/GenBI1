@@ -92,6 +92,14 @@ class UserController extends Controller
             $dataToUpdate['photo'] = $request->file('photo')->store('photos', 'public');
         }
 
+        // ==============================================================
+        // KUNCI PERBAIKAN: Jika user ini sedang meminta reset sandi, 
+        // matikan tanda merahnya otomatis saat Admin menekan tombol simpan
+        // ==============================================================
+        if ($user->request_reset) {
+            $dataToUpdate['request_reset'] = false;
+        }
+
         $user->update($dataToUpdate);
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui');

@@ -21,6 +21,7 @@ class User extends Authenticatable
         'devisi',
         'photo',
         'jabatan',
+        'request_reset',
     ];
 
     protected $hidden = [

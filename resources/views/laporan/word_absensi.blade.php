@@ -132,19 +132,41 @@
         ];
         $tglIndo = date('d') . ' ' . $bulan[date('F')] . ' ' . date('Y');
     @endphp
-    <br><br><br>
-    <table style="width: 100%; margin-top: 80px; border-collapse: collapse;">
+    <table style="width: 100%; border: none; margin-top: 30px; border-collapse: collapse; table-layout: fixed;">
         <tr>
-            <td width="60%"></td>
+            <td style="width: 50%; border: none;"></td>
 
-            <td width="40%" class="text-center">
-                <p>Kolaka, {{ $tglIndo }}</p>
-                <p>Sekretaris Devisi,</p>
-                <br><br><br><br>
-                <p class="bold">( ........................................ )</p>
+            <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
+
+                <table style="width: 100%; border: none; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 40%; border: none;"></td>
+                        <td
+                            style="width: 60%; text-align: center; font-family: Arial, sans-serif; font-size: 12px; padding-bottom: 5px;">
+                            Kolaka, {{ now()->format('d M Y') }}<br>
+                            Ketua Umum
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
+                            <div
+                                style="font-family: Arial, sans-serif; font-size: 10px; color: #000; margin-bottom: 3px;">
+                                Scan untuk lihat keaslian
+                            </div>
+                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="65px"
+                                style="display: block; margin: 0 auto;">
+                        </td>
+
+                        <td style="width: 60%; text-align: center; vertical-align: bottom; border: none;">
+                            <div style="font-family: Arial, sans-serif; font-size: 12px; margin-top: 40px;">
+                                ( .............................. )
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
-</body>
 
 </html>

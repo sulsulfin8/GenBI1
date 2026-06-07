@@ -7,16 +7,17 @@ use App\Models\Kegiatan;
 use App\Models\User;
 use App\Models\Anggaran;
 use Illuminate\Support\Facades\File;
+use App\Models\Info;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. Ambil data Visi & Misi dari file JSON
-        $infoPath = storage_path('app/genbi_info.json');
-        if (File::exists($infoPath)) {
-            $info = json_decode(File::get($infoPath));
-        } else {
+        // Membaca data dari Database MySQL
+        $info = Info::first();
+
+        // Jika database masih kosong, berikan nilai default
+        if (!$info) {
             $info = (object) [
                 'visi' => '',
                 'misi' => '',
@@ -24,11 +25,11 @@ class DashboardController extends Controller
                 'pelanggaran' => '',
                 'qris' => '',
                 'apresiasi' => '',
-                'sp' => ''
+                'sp' => '',
+                'kriteria_beasiswa' => '',
+                'dokumen_beasiswa' => ''
             ];
         }
-
-        // 2. Ambil foto-foto dokumentasi
         $galeriPath = public_path('dokumentasi');
         $galeri = [];
         if (File::exists($galeriPath)) {
@@ -38,7 +39,6 @@ class DashboardController extends Controller
             }
         }
 
-        // 3. Statistik Dashboard
         $totalKegiatan = Kegiatan::count();
         $totalAnggota = User::where('role', 'anggota')->count();
 
@@ -50,12 +50,21 @@ class DashboardController extends Controller
 
         $kegiatanTerbaru = Kegiatan::latest()->take(5)->get();
 
-        // 4. STRUKTUR ORGANISASI
         $ketua = User::where('role', 'admin')->first();
         $sekretaris = User::where('role', 'sekretaris')->first();
         $bendahara = User::where('role', 'bendahara')->first();
         $semuaKadep = User::where('jabatan', 'like', 'Ketua Devisi%')->get()->keyBy('jabatan');
         $anggotaDevisi = User::where('role', 'anggota')->get()->groupBy('devisi');
+
+        $agendaTerdekat = Kegiatan::whereDate('tanggal', '>=', now()->toDateString())
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $tampilkanPopup = false;
+        if (auth()->check() && auth()->user()->role == 'anggota' && !session()->has('popup_tampil_sekali')) {
+            $tampilkanPopup = true;
+            session()->put('popup_tampil_sekali', true);
+        }
 
         return view('dashboard.index', compact(
             'info',
@@ -68,47 +77,43 @@ class DashboardController extends Controller
             'sekretaris',
             'bendahara',
             'semuaKadep',
-            'anggotaDevisi'
+            'anggotaDevisi',
+            'agendaTerdekat',
+            'tampilkanPopup'
         ));
     }
 
+    // PERBAIKAN: Ubah nama menjadi updateInfo (huruf I besar)
     public function updateInfo(Request $request)
     {
-        $infoPath = storage_path('app/genbi_info.json');
-        $info = File::exists($infoPath) ? json_decode(File::get($infoPath), true) : [];
-        if (!is_array($info)) $info = [];
+        // Ambil data pertama dari database, jika kosong maka buat baru
+        $info = Info::first() ?? new Info();
 
-        $info['visi'] = $request->visi;
-        $info['misi'] = $request->misi;
-        $info['komitmen'] = $request->komitmen;
+        if ($request->has('visi')) $info->visi = $request->visi;
+        if ($request->has('misi')) $info->misi = $request->misi;
+        if ($request->has('komitmen')) $info->komitmen = $request->komitmen;
+        if ($request->has('kriteria_beasiswa')) $info->kriteria_beasiswa = $request->kriteria_beasiswa;
+        if ($request->has('dokumen_beasiswa')) $info->dokumen_beasiswa = $request->dokumen_beasiswa;
 
-        File::put($infoPath, json_encode($info, JSON_PRETTY_PRINT));
-        return redirect()->back()->with('success', 'Informasi GenBI berhasil diperbarui!');
+        $info->save();
+
+        return redirect()->back();
     }
 
-    public function update_info(Request $request)
-    {
-        return $this->updateInfo($request);
-    }
-
+    // PERBAIKAN: Ubah nama menjadi updatePoin (huruf P besar) untuk berjaga-jaga
     public function updatePoin(Request $request)
     {
-        $infoPath = storage_path('app/genbi_info.json');
-        $info = File::exists($infoPath) ? json_decode(File::get($infoPath), true) : [];
-        if (!is_array($info)) $info = [];
+        // Ambil data pertama dari database, jika kosong maka buat baru
+        $info = Info::first() ?? new Info();
 
-        $info['pelanggaran'] = $request->pelanggaran;
-        $info['qris'] = $request->qris;
-        $info['apresiasi'] = $request->apresiasi;
-        $info['sp'] = $request->sp;
+        if ($request->has('pelanggaran')) $info->pelanggaran = $request->pelanggaran;
+        if ($request->has('qris')) $info->qris = $request->qris;
+        if ($request->has('apresiasi')) $info->apresiasi = $request->apresiasi;
+        if ($request->has('sp')) $info->sp = $request->sp;
 
-        File::put($infoPath, json_encode($info, JSON_PRETTY_PRINT));
-        return redirect()->back()->with('success', 'Aturan Poin berhasil diperbarui!');
-    }
+        $info->save();
 
-    public function update_poin(Request $request)
-    {
-        return $this->updatePoin($request);
+        return redirect()->back();
     }
 
     public function uploadDokumentasi(Request $request)
@@ -127,14 +132,9 @@ class DashboardController extends Controller
         return $this->uploadDokumentasi($request);
     }
 
-    // =========================================================
-    // PERBAIKAN: FITUR HAPUS FOTO (MASSAL & SATUAN)
-    // =========================================================
     public function hapusDokumentasi(Request $request)
     {
         $deletedCount = 0;
-
-        // 1. Cek jika menggunakan hapus massal (nama file dikirim dalam bentuk Array 'filenames')
         if ($request->has('filenames') && is_array($request->filenames)) {
             foreach ($request->filenames as $filename) {
                 $path = public_path('dokumentasi/' . $filename);
@@ -144,10 +144,7 @@ class DashboardController extends Controller
                 }
             }
             return redirect()->back()->with('success', $deletedCount . ' Foto dokumentasi berhasil dihapus!');
-        }
-
-        // 2. Cek jika menggunakan hapus satuan (hanya 1 nama file 'filename')
-        else if ($request->has('filename')) {
+        } else if ($request->has('filename')) {
             $path = public_path('dokumentasi/' . $request->filename);
             if (File::exists($path)) {
                 File::delete($path);
@@ -155,11 +152,9 @@ class DashboardController extends Controller
             }
             return redirect()->back()->with('success', 'Foto dokumentasi berhasil dihapus!');
         }
-
         return redirect()->back()->with('error', 'Tidak ada foto yang dipilih untuk dihapus.');
     }
 
-    // Kembaran nama fungsi agar tidak terjadi error (berjaga-jaga web.php kamu memanggil fungsi yang berbeda)
     public function hapus_dokumentasi(Request $request)
     {
         return $this->hapusDokumentasi($request);

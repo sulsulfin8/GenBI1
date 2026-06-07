@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kegiatan;
 use App\Models\Absensi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class KegiatanController extends Controller
 {
@@ -102,20 +103,19 @@ class KegiatanController extends Controller
     {
         $kegiatan = Kegiatan::findOrFail($id);
 
-        // ==================================================
-        // PEMBERSIHAN TOTAL (CASCADE DELETE)
-        // ==================================================
-        // 1. Hapus semua daftar absensi yang terkait dengan nama kegiatan ini
-        // PERBAIKAN: Gunakan 'LIKE' agar bisa menghapus absensi yang namanya terlanjur kotor oleh emoji
-        \App\Models\Absensi::where('kegiatan', 'like', '%' . $kegiatan->nama_kegiatan . '%')->delete();
+        // 1. Bersihkan nama kegiatan (hilangkan spasi di awal/akhir)
+        $namaKegiatan = trim($kegiatan->nama_kegiatan);
 
-        // 2. Hapus semua rincian anggaran yang terkait dengan ID kegiatan ini
+        // 2. HAPUS ABSENSI (Gunakan LIKE agar jauh lebih aman dan fleksibel)
+        // LIKE '%...%' akan memastikan walaupun ada spasi nyangkut di database, datanya tetap terhapus.
+        $jumlahTerhapus = \App\Models\Absensi::where('kegiatan', 'like', '%' . $namaKegiatan . '%')->delete();
+
+        // 3. HAPUS ANGGARAN
         \App\Models\Anggaran::where('kegiatan_id', $kegiatan->id)->delete();
 
-        // 3. Terakhir, baru hapus acara kegiatannya
+        // 4. HAPUS KEGIATAN
         $kegiatan->delete();
 
-        // 4. Kembali ke halaman dengan pesan sukses 
-        return redirect()->route('kegiatan')->with('success', 'Kegiatan beserta seluruh data absensi dan anggarannya berhasil dihapus permanen!');
+        return redirect()->route('kegiatan')->with('success', "Kegiatan dihapus. ($jumlahTerhapus data absensi ikut dibersihkan)");
     }
 }

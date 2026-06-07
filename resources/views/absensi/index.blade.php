@@ -18,42 +18,99 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div
+            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-sm font-bold flex flex-col gap-2 shadow-sm animate-fade-in-down">
+            <div class="flex items-center gap-3">
+                <div class="bg-red-500 text-white p-1 rounded-full">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </div>
+                Penyimpanan Gagal! Perhatikan hal berikut:
+            </div>
+            <ul class="list-disc list-inside ml-8 font-medium">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="bg-white rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 relative z-20">
 
         <form action="{{ url()->current() }}" method="GET" id="filterForm"
-            class="flex flex-col lg:flex-row justify-between items-center mb-6 text-sm text-gray-600 gap-4">
-            <div class="flex items-center gap-2 w-full lg:w-auto">
-                <span class="font-medium">Tampilkan</span>
-                <select name="per_page" onchange="this.form.submit()"
-                    class="border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 bg-gray-50 hover:bg-white transition font-bold text-gray-700 cursor-pointer">
-                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                </select>
-                <span class="font-medium hidden md:inline">entri</span>
-            </div>
+            class="flex flex-col lg:flex-row justify-end items-center mb-6 text-sm text-gray-600 gap-4">
 
             <div class="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto">
-                <div class="relative w-full md:w-64">
-                    <select name="kegiatan_id" id="master_kegiatan" onchange="this.form.submit()"
-                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 bg-gray-50 hover:bg-white transition font-bold text-primary-blue cursor-pointer appearance-none">
+
+                @if (request('kegiatan_id'))
+                    @php
+                        $selectedKeg = $kegiatans->where('id', request('kegiatan_id'))->first();
+                        $isDoneNow = in_array($selectedKeg->nama_kegiatan ?? '', $sudahAbsen);
+                    @endphp
+                    <div
+                        class="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 flex-shrink-0 {{ $isDoneNow ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200' }}">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isDoneNow ? 'bg-emerald-400' : 'bg-amber-400' }} opacity-75"></span>
+                            <span
+                                class="relative inline-flex rounded-full h-2 w-2 {{ $isDoneNow ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                        </span>
+                        Status: {{ $isDoneNow ? 'Sudah Di-Absen' : 'Belum Ada Absensi' }}
+                    </div>
+                @endif
+
+                <div class="relative w-full md:w-72" id="customDropdownContainer">
+                    <select name="kegiatan_id" id="master_kegiatan" class="hidden">
                         <option value="" data-nama="">-- 1. Pilih Kegiatan --</option>
                         @foreach ($kegiatans as $kegiatan)
-                            @php
-                                $isDone = in_array($kegiatan->nama_kegiatan, $sudahAbsen);
-                            @endphp
+                            @php $isDone = in_array($kegiatan->nama_kegiatan, $sudahAbsen); @endphp
                             <option value="{{ $kegiatan->id }}" data-nama="{{ $kegiatan->nama_kegiatan }}"
-                                {{ request('kegiatan_id') == $kegiatan->id ? 'selected' : '' }}
-                                class="{{ $isDone ? 'text-emerald-600' : 'text-red-500' }}">
+                                {{ request('kegiatan_id') == $kegiatan->id ? 'selected' : '' }}>
                                 {{ $isDone ? '✅' : '🔴' }} {{ $kegiatan->nama_kegiatan }}
                             </option>
                         @endforeach
                     </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    <button type="button" id="dropdownButton"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 bg-gray-50 hover:bg-white transition font-bold text-primary-blue flex justify-between items-center text-left">
+                        <span id="dropdownSelectedText" class="truncate">-- 1. Pilih Kegiatan --</span>
+                        <svg class="h-5 w-5 text-gray-400 flex-shrink-0 transition-transform duration-200" id="dropdownIcon"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
+                    </button>
+
+                    <div id="dropdownMenu"
+                        class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgb(0,0,0,0.1)] hidden flex-col overflow-hidden origin-top transition-all scale-95 opacity-0">
+                        <div class="p-3 border-b border-gray-50 bg-gray-50/50">
+                            <div class="relative">
+                                <input type="text" id="dropdownSearch" placeholder="Cari kegiatan..."
+                                    class="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue/20 focus:border-primary-blue transition-all">
+                                <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <ul id="dropdownOptions" class="max-h-60 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                            <li class="px-3 py-2.5 rounded-xl cursor-pointer text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors dropdown-option"
+                                data-value="">
+                                -- 1. Pilih Kegiatan --
+                            </li>
+                            @foreach ($kegiatans as $kegiatan)
+                                @php $isDone = in_array($kegiatan->nama_kegiatan, $sudahAbsen); @endphp
+                                <li class="px-3 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-colors dropdown-option flex items-center gap-2 {{ $isDone ? 'text-emerald-600 hover:bg-emerald-50' : 'text-red-500 hover:bg-red-50' }}"
+                                    data-value="{{ $kegiatan->id }}" data-nama="{{ $kegiatan->nama_kegiatan }}">
+                                    <span>{{ $isDone ? '✅' : '🔴' }}</span>
+                                    <span class="truncate">{{ $kegiatan->nama_kegiatan }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 </div>
 
@@ -69,25 +126,6 @@
                 </div>
             </div>
         </form>
-
-        @if (request('kegiatan_id'))
-            @php
-                $selectedKeg = $kegiatans->where('id', request('kegiatan_id'))->first();
-                $isDoneNow = in_array($selectedKeg->nama_kegiatan ?? '', $sudahAbsen);
-            @endphp
-            <div class="mb-4 flex items-center gap-3">
-                <div
-                    class="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 {{ $isDoneNow ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-700 border border-amber-200' }}">
-                    <span class="relative flex h-2 w-2">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isDoneNow ? 'bg-emerald-400' : 'bg-amber-400' }} opacity-75"></span>
-                        <span
-                            class="relative inline-flex rounded-full h-2 w-2 {{ $isDoneNow ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
-                    </span>
-                    Status Kegiatan: {{ $isDoneNow ? 'Sudah Di-Absen' : 'Belum Ada Absensi' }}
-                </div>
-            </div>
-        @endif
 
         <form action="{{ route('absensi.store') }}" method="POST">
             @csrf
@@ -113,7 +151,7 @@
                         @forelse($users as $user)
                             <tr class="hover:bg-blue-50/40 transition-colors duration-200 group">
                                 <td class="py-4 px-5 text-center text-gray-400 font-bold">
-                                    {{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}
+                                    {{ $loop->iteration }}
                                 </td>
                                 <td class="py-4 px-5">
                                     <div class="flex items-center gap-4">
@@ -184,7 +222,7 @@
                                 <td class="py-4 px-5">
                                     <div class="flex justify-center items-center">
                                         @php
-                                            $statusDb = 'H'; // Default
+                                            $statusDb = 'H';
                                             if (isset($absensiRecord) && isset($absensiRecord[$user->nim])) {
                                                 $statusDb = $absensiRecord[$user->nim]->status;
                                             }
@@ -248,10 +286,7 @@
                 </table>
             </div>
 
-            <div class="mt-6 pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="w-full md:w-auto overflow-x-auto hide-scrollbar">
-                    {{ $users->appends(request()->query())->links() }}
-                </div>
+            <div class="mt-6 pt-6 border-t border-gray-100 flex justify-end">
                 <button type="submit"
                     class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-primary-blue hover:from-blue-700 hover:to-blue-600 text-white px-10 py-3.5 rounded-2xl font-black text-sm transition-all duration-300 shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 hover:-translate-y-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,6 +323,24 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 
     <script>
@@ -309,24 +362,100 @@
                 searchInput.value = '';
                 searchInput.value = val;
             }
+            initCustomDropdown();
             syncSemuaKegiatan();
         });
 
+        function initCustomDropdown() {
+            const container = document.getElementById('customDropdownContainer');
+            if (!container) return;
+
+            const button = document.getElementById('dropdownButton');
+            const menu = document.getElementById('dropdownMenu');
+            const search = document.getElementById('dropdownSearch');
+            const options = document.querySelectorAll('.dropdown-option');
+            const select = document.getElementById('master_kegiatan');
+            const selectedText = document.getElementById('dropdownSelectedText');
+            const icon = document.getElementById('dropdownIcon');
+
+            const initSelected = select.querySelector('option:checked');
+            if (initSelected && initSelected.value !== "") {
+                selectedText.innerHTML = initSelected.innerHTML;
+                selectedText.className = initSelected.className + " truncate";
+            }
+
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isHidden = menu.classList.contains('hidden');
+
+                if (isHidden) {
+                    menu.classList.remove('hidden');
+                    setTimeout(() => {
+                        menu.classList.remove('scale-95', 'opacity-0');
+                        menu.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                    icon.classList.add('rotate-180');
+                    search.focus();
+                } else {
+                    tutupDropdown();
+                }
+            });
+
+            function tutupDropdown() {
+                menu.classList.remove('scale-100', 'opacity-100');
+                menu.classList.add('scale-95', 'opacity-0');
+                icon.classList.remove('rotate-180');
+                setTimeout(() => {
+                    menu.classList.add('hidden');
+                }, 200);
+            }
+
+            search.addEventListener('input', function() {
+                const val = this.value.toLowerCase();
+                options.forEach(opt => {
+                    if (opt.innerText.toLowerCase().includes(val)) {
+                        opt.classList.remove('hidden');
+                    } else {
+                        opt.classList.add('hidden');
+                    }
+                });
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', function() {
+                    const val = this.getAttribute('data-value');
+                    select.value = val;
+                    selectedText.innerHTML = this.innerHTML;
+                    selectedText.className = "truncate";
+                    if (this.classList.contains('text-emerald-600')) selectedText.classList.add(
+                        'text-emerald-600');
+                    if (this.classList.contains('text-red-500')) selectedText.classList.add('text-red-500');
+
+                    tutupDropdown();
+                    document.getElementById('filterForm').submit();
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!container.contains(e.target) && !menu.classList.contains('hidden')) {
+                    tutupDropdown();
+                }
+            });
+        }
+
         function syncSemuaKegiatan() {
-            const dropdownMaster = document.getElementById('master_kegiatan');
-            if (!dropdownMaster) return;
+            const select = document.getElementById('master_kegiatan');
+            if (!select) return;
 
-            const selectedValue = dropdownMaster.value;
-            const selectedText = selectedValue !== "" ? dropdownMaster.options[dropdownMaster.selectedIndex].getAttribute(
-                'data-nama') : "";
-
+            const selectedOption = select.querySelector('option:checked');
+            const selectedText = selectedOption && selectedOption.value !== "" ? selectedOption.getAttribute('data-nama') :
+                "";
             const semuaInputNama = document.querySelectorAll('.input-kegiatan-nama');
             const semuaTeksContainer = document.querySelectorAll('.teks-kegiatan-container');
 
             semuaInputNama.forEach(function(input, index) {
                 const container = semuaTeksContainer[index];
-
-                if (selectedValue !== "") {
+                if (selectedText !== "") {
                     input.value = selectedText;
                     container.classList.remove('text-gray-400');
                     container.classList.add('text-blue-600', 'bg-blue-50', 'px-3', 'py-1.5', 'rounded-lg', 'w-max',

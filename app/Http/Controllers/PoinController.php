@@ -86,15 +86,28 @@ class PoinController extends Controller
             $teksManualBersih = preg_replace('/(Kegiatan Lain\s*:\s*)+/i', '', $teksManualBersih);
             $teksManualBersih = trim(str_replace(['||', ' | '], '|', $teksManualBersih), " -|");
 
+            // ==============================================================
+            // PERBAIKAN: Logika menyembunyikan Absensi jika 0 Alpa & 0 Izin
+            // ==============================================================
             $ketAbsensi = [];
             if ($alpa > 0) $ketAbsensi[] = "Alpa: $alpa kali";
             if ($izin > 0) $ketAbsensi[] = "Izin: $izin kali";
-            $teksAbsensiBaru = empty($ketAbsensi) ? "Hadir 100%" : implode(', ', $ketAbsensi);
 
-            $keteranganAkhir = "Absensi (" . $teksAbsensiBaru . ")";
-            if (!empty($teksManualBersih)) {
-                $keteranganAkhir .= " | Kegiatan Lain: " . $teksManualBersih;
+            $keteranganAkhir = "";
+            if (!empty($ketAbsensi)) {
+                $keteranganAkhir = "Absensi (" . implode(', ', $ketAbsensi) . ")";
             }
+
+            if (!empty($teksManualBersih)) {
+                $separator = !empty($keteranganAkhir) ? " | " : "";
+                $keteranganAkhir .= $separator . "Kegiatan Lain: " . $teksManualBersih;
+            }
+
+            // Jika sama sekali tidak ada catatan absensi & kegiatan lain, berikan tanda strip (-)
+            if (empty($keteranganAkhir)) {
+                $keteranganAkhir = "-";
+            }
+            // ==============================================================
 
             // Label Jabatan Khusus
             $jabatanTampil = 'Anggota';
@@ -156,5 +169,83 @@ class PoinController extends Controller
             ]);
         }
         return redirect()->back()->with('success', 'Teks keterangan berhasil diperbarui!');
+    }
+    // Fungsi untuk membatalkan pemberian poin tambahan/manual
+    // Fungsi untuk membatalkan pemberian poin tambahan/manual
+    // Fungsi untuk membatalkan salah satu item poin pilihan admin/sekretaris
+    public function batalPoin(Request $request, $id)
+    {
+        // Mencari data poin berdasarkan ID atau NIM
+        $poin = \App\Models\Poin::where('id', $id)->orWhere('nim', $id)->firstOrFail();
+
+        // Ambil index keberapa yang mau dihapus
+        $itemIndex = $request->input('item_index');
+
+        if ($itemIndex !== null && !empty($poin->keterangan) && $poin->keterangan !== '-') {
+            $splitKet = explode('|', $poin->keterangan);
+
+            // Hapus item pada index terpilih
+            if (isset($splitKet[$itemIndex])) {
+                unset($splitKet[$itemIndex]);
+            }
+
+            // Satukan kembali sisa-sisa item keterangan yang ada
+            $sisaKet = array_filter(array_map('trim', $splitKet));
+            if (empty($sisaKet)) {
+                $poin->keterangan = '-';
+            } else {
+                $poin->keterangan = implode(' | ', $sisaKet);
+            }
+        } else {
+            $poin->keterangan = '-';
+        }
+
+        // --- PROSES REKALKULASI OTOMATIS (SMART PARSER KEMBALI BALIK LAYAR) ---
+        $totalPelanggaranManual = 0;
+        $totalApresiasiManual = 0;
+
+        if ($poin->keterangan && $poin->keterangan !== '-') {
+            if (preg_match_all('/([+-])\s*(\d+)/', $poin->keterangan, $matches)) {
+                for ($i = 0; $i < count($matches[0]); $i++) {
+                    $sign = $matches[1][$i];
+                    $val = (int) $matches[2][$i];
+                    if ($sign == '+') {
+                        $totalPelanggaranManual += $val;
+                    } else {
+                        $totalApresiasiManual += $val;
+                    }
+                }
+            }
+        }
+
+        // Hitung total poin baru = Poin Absensi + Poin Pelanggaran - Poin Apresiasi
+        $poin->total_poin = $poin->poin_absensi + $totalPelanggaranManual - $totalApresiasiManual;
+
+        // Hitung ulang status ambang batas Surat Peringatan (SP)
+        if ($poin->total_poin > 50) {
+            $poin->sp = 'SP 3';
+        } elseif ($poin->total_poin == 50) {
+            $poin->sp = 'SP 2';
+        } elseif ($poin->total_poin >= 25) {
+            $poin->sp = 'SP 1';
+        } else {
+            $poin->sp = 'Aman';
+        }
+
+        $poin->save();
+
+        // KUNCI PERBAIKAN: Jika permintaan datang dari AJAX (JavaScript), balas dengan JSON tanpa me-reload halaman
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'new_keterangan' => $poin->keterangan
+            ]);
+        }
+
+        // Jika normal, jalankan ini
+        return redirect()->back()->with([
+            'success' => 'Berhasil! Item poin pilihan Anda telah dibatalkan.',
+            'open_modal_batal_nim' => $poin->nim
+        ]);
     }
 }

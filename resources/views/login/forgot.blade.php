@@ -187,7 +187,7 @@
                                 </path>
                             </svg>
                         </div>
-                        <input type="email" id="input-login" name="login" required
+                        <input type="text" id="input-login" name="login" required
                             placeholder="Masukkan email Anda..."
                             class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
                     </div>
@@ -198,29 +198,22 @@
                         <svg class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-                            </path>
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <p class="text-xs font-semibold text-orange-800 leading-relaxed">
-                            Validasi Keamanan Ganda: Masukkan NIM dan Jurusan sesuai dengan profil terdaftar Anda.
+                            Anggota tidak dapat mereset sandi secara mandiri. Masukkan NIM untuk mengirimkan peringatan
+                            ganti sandi kepada Admin/Sekretaris.
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1.5">NIM</label>
-                            <input type="text" id="input-nim" name="nim" placeholder="22123..."
-                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1.5">Jurusan</label>
-                            <input type="text" id="input-jurusan" name="jurusan" placeholder="Sistem Info..."
-                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1.5">NIM</label>
+                        <input type="text" id="input-nim" name="nim" placeholder="22123..."
+                            class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
                     </div>
                 </div>
 
-                <div class="pt-2">
+                <div id="div-sandi-baru" class="pt-2">
                     <label class="block text-sm font-bold text-gray-700 mb-1.5">Sandi Baru</label>
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -231,7 +224,8 @@
                                 </path>
                             </svg>
                         </div>
-                        <input type="password" name="password" required placeholder="Minimal 6 karakter"
+                        <input type="password" id="input-password" name="password" required
+                            placeholder="Minimal 6 karakter"
                             class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
                     </div>
                 </div>
@@ -239,7 +233,7 @@
                 <button type="submit"
                     class="w-full relative overflow-hidden group bg-primary-blue hover:bg-primary-dark text-white rounded-2xl py-4 font-bold text-sm tracking-wide shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-blue-500/50 mt-4">
                     <span class="relative z-10 flex items-center justify-center gap-2">
-                        Simpan Sandi Baru
+                        <span id="btn-text">Simpan Sandi Baru</span>
                         <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
@@ -260,32 +254,38 @@
             const labelLogin = document.getElementById('label-login');
             const iconLogin = document.getElementById('icon-login');
 
+            const divSandiBaru = document.getElementById('div-sandi-baru');
+            const inputPassword = document.getElementById('input-password');
+            const btnText = document.getElementById('btn-text');
+
             if (tipe === 'pengurus') {
+                // Tampilan untuk Pengurus
                 formAnggota.classList.add('hidden');
+                divSandiBaru.classList.remove('hidden');
 
                 labelLogin.innerText = "Email Terdaftar";
                 inputLogin.placeholder = "Masukkan email Anda...";
                 inputLogin.type = "email";
-
-                // Icon Mail
                 iconLogin.innerHTML =
                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>';
 
                 document.getElementById('input-nim').required = false;
-                document.getElementById('input-jurusan').required = false;
+                inputPassword.required = true;
+                btnText.innerText = "Simpan Sandi Baru";
             } else {
+                // Tampilan untuk Anggota
                 formAnggota.classList.remove('hidden');
+                divSandiBaru.classList.add('hidden'); // Sembunyikan kolom password
 
                 labelLogin.innerText = "Nama Lengkap Terdaftar";
                 inputLogin.placeholder = "Masukkan nama lengkap...";
                 inputLogin.type = "text";
-
-                // Icon User
                 iconLogin.innerHTML =
                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>';
 
                 document.getElementById('input-nim').required = true;
-                document.getElementById('input-jurusan').required = true;
+                inputPassword.required = false; // Matikan validasi password
+                btnText.innerText = "Kirim Permintaan Reset";
             }
         }
     </script>

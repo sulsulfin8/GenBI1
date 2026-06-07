@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
     // TAPI HANYA Admin & Sekretaris yang bisa simpan/ubah poin
     Route::post('/poin/update', [PoinController::class, 'updatePoin'])->middleware('role:admin,sekretaris')->name('poin.update');
     Route::post('/poin/edit-keterangan', [App\Http\Controllers\PoinController::class, 'editKeterangan'])->name('poin.edit_keterangan');
+    Route::post('/poin/{id}/batal', [PoinController::class, 'batalPoin'])->name('poin.batal');
 
     // ==========================================
     // KELOMPOK A: KHUSUS ADMIN & SEKRETARIS
@@ -116,4 +117,5 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rancangan-anggaran', [AnggaranController::class, 'index'])->name('anggaran');
         Route::post('/rancangan-anggaran/store', [AnggaranController::class, 'store'])->name('anggaran.store');
     });
+    Route::get('/verifikasi-dokumen', [\App\Http\Controllers\LaporanController::class, 'verifikasiDokumen'])->name('verifikasi.dokumen');
 });

@@ -1219,7 +1219,7 @@
                                             class="bg-gradient-to-r {{ $color }} p-4 rounded-2xl text-white shadow-md">
                                             <div class="flex justify-between items-center gap-3">
                                                 <div>
-                                                    <p class="text-xs opacity-90 font-bold uppercase">Ambang Batas
+                                                    <p class="text-xs opacity-90 font-bold uppercase">Surat Peringatan
                                                         {{ $numeral }}</p>
                                                     <p class="text-lg font-black leading-tight">{{ trim($name) }}</p>
                                                 </div>
@@ -1528,10 +1528,74 @@
             </div>
 
             <div
-                class="p-4 bg-white border-t border-gray-100 flex justify-end items-center z-20 flex-shrink-0 rounded-b-3xl">
+                class="p-4 bg-white border-t border-gray-100 flex justify-end gap-3 items-center z-20 flex-shrink-0 rounded-b-3xl">
+                @if (auth()->check() && in_array(auth()->user()->role, ['admin', 'sekretaris']))
+                    <button onclick="toggleModal('modalEditBeasiswa')"
+                        class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl font-bold transition text-sm shadow-sm hover:shadow-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                            </path>
+                        </svg>
+                        Edit Beasiswa
+                    </button>
+                @endif
                 <button onclick="toggleModal('modalInfoBeasiswa')"
                     class="bg-primary-blue hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold transition text-sm shadow-sm hover:shadow-lg">Kembali</button>
             </div>
+        </div>
+    </div>
+    <div id="modalEditBeasiswa"
+        class="fixed inset-0 z-[60] hidden bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 sm:p-6 transition-all">
+        <div
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden animate-modal max-h-[95vh] relative">
+            <div
+                class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0 z-20">
+                <h3 class="text-lg font-extrabold text-gray-800">Edit Syarat & Dokumen Beasiswa</h3>
+                <button onclick="toggleModal('modalEditBeasiswa')"
+                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="formEditBeasiswa" action="{{ route('dashboard.update_info') }}" method="POST"
+                class="p-6 space-y-6 overflow-y-auto hide-scrollbar flex-1 z-10">
+                @csrf
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 flex gap-3 items-start">
+                    <svg class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm text-blue-800 font-medium leading-relaxed">
+                        <b>Panduan:</b> Pisahkan setiap poin aturan/dokumen menggunakan Enter (Baris Baru). Nomor urut dan
+                        ikon pada tampilan anggota akan otomatis dibuatkan oleh sistem.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Kriteria Umum Mahasiswa</label>
+                        <textarea name="kriteria_beasiswa" rows="10" required
+                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all">{{ $info->kriteria_beasiswa ?? "Mahasiswa aktif dan terdata pada PDDikti.\nTelah menyelesaikan min. 40 SKS.\nMemiliki IPK minimal 3.00." }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Dokumen Pendukung</label>
+                        <textarea name="dokumen_beasiswa" rows="10" required
+                            class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all">{{ $info->dokumen_beasiswa ?? "Biodata Mahasiswa.\nSalinan KTP atau KTM.\nSalinan Kartu Keluarga (KK)." }}</textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+                    <button type="button" onclick="toggleModal('modalEditBeasiswa')"
+                        class="px-5 py-2.5 text-gray-600 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl text-sm transition">Batal</button>
+                    <button type="submit"
+                        class="bg-gradient-to-r from-blue-600 to-primary-blue hover:from-blue-700 hover:to-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-blue-500/30 transition hover:-translate-y-0.5">Simpan
+                        Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1658,6 +1722,19 @@
         </div>
     @endif
     <script>
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.id === 'formEditGenbi') {
+                e.preventDefault();
+                prosesSimpanInstan(e.target, 'modalEditGenbi', 'modalInfoGenbi');
+            } else if (e.target && e.target.id === 'formEditPoin') {
+                e.preventDefault();
+                prosesSimpanInstan(e.target, 'modalEditPoin', 'modalInfoPoin');
+            } else if (e.target && e.target.id === 'formEditBeasiswa') { // <--- Ini tambahannya
+                e.preventDefault();
+                prosesSimpanInstan(e.target, 'modalEditBeasiswa', 'modalInfoBeasiswa');
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", function() {
             // LOGIKA CAROUSEL GALERI DOKUMENTASI
             let currentSlide = 0;
@@ -1810,4 +1887,129 @@
             }
         }
     </script>
+    @if (auth()->user()->role == 'anggota' &&
+            isset($agendaTerdekat) &&
+            $agendaTerdekat->isNotEmpty() &&
+            isset($tampilkanPopup) &&
+            $tampilkanPopup)
+        <div id="popupAgenda"
+            class="fixed inset-0 z-[100] flex bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 transition-all duration-300">
+            <div
+                class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 relative z-[110] animate-modal border border-gray-50/50">
+
+                <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="bg-gradient-to-tr from-amber-500 to-yellow-400 text-white p-2.5 rounded-xl shadow-md shadow-amber-500/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-gray-800 leading-tight">Agenda Kegiatan GenBI</h3>
+                            <p class="text-xs font-medium text-gray-400 mt-0.5">Informasi jadwal pelaksanaan kegiatan
+                                terdekat.</p>
+                        </div>
+                    </div>
+                    <button onclick="tutupPopupAgenda()"
+                        class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4 max-h-[55vh] overflow-y-auto pr-1 hide-scrollbar">
+                    @foreach ($agendaTerdekat as $agenda)
+                        @php
+                            $tgl = \Carbon\Carbon::parse($agenda->tanggal);
+                            $isToday = $tgl->isToday();
+                            $isTomorrow = $tgl->isTomorrow();
+                        @endphp
+
+                        <div
+                            class="p-4 rounded-2xl border transition-all duration-300 hover:translate-x-1 shadow-sm
+                        {{ $isToday ? 'bg-red-50/60 border-red-100' : ($isTomorrow ? 'bg-amber-50/60 border-amber-100' : 'bg-blue-50/40 border-blue-100/70') }}">
+
+                            <div class="flex justify-between items-center gap-2 mb-2">
+                                <span
+                                    class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm
+                                {{ $isToday ? 'bg-gradient-to-r from-red-600 to-rose-500 text-white animate-pulse' : ($isTomorrow ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white' : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white') }}">
+                                    {{ $isToday ? 'Hari Ini' : ($isTomorrow ? 'Besok' : 'Mendatang') }}
+                                </span>
+                                <span
+                                    class="text-xs font-mono font-bold text-gray-500 bg-white border border-gray-100 px-2 py-0.5 rounded-md shadow-inner">
+                                    {{ $tgl->translatedFormat('d F Y') }}
+                                </span>
+                            </div>
+
+                            <h4 class="font-black text-gray-800 text-sm tracking-tight leading-snug mb-3">
+                                {{ $agenda->nama_kegiatan }}</h4>
+
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-bold text-gray-600 mb-3 bg-white/80 p-2.5 rounded-xl border border-gray-100 shadow-inner">
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="truncate">Jam: {{ $agenda->waktu ?? ($agenda->jam ?? 'Selesai') }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                                        </path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <span class="truncate"
+                                        title="{{ $agenda->tempat ?? ($agenda->lokasi ?? '-') }}">Lokasi:
+                                        {{ $agenda->tempat ?? ($agenda->lokasi ?? '-') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                <span
+                                    class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-[11px] font-extrabold shadow-sm">
+                                    💼 Pelaksana: {{ $agenda->devisi }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+                    <button onclick="tutupPopupAgenda()"
+                        class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs transition-all duration-300 shadow-lg shadow-blue-500/20 hover:-translate-y-0.5">
+                        Saya Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const popup = document.getElementById('popupAgenda');
+                if (popup) {
+                    document.body.style.overflow = 'hidden'; // Kunci scroll layar utama saat muncul
+                }
+            });
+
+            function tutupPopupAgenda() {
+                const modal = document.getElementById('popupAgenda');
+                if (modal) {
+                    modal.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        modal.remove();
+                        document.body.style.overflow = 'auto'; // Buka kembali scroll
+                    }, 250);
+                }
+            }
+        </script>
+    @endif
 @endsection

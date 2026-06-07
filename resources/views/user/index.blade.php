@@ -6,6 +6,39 @@
         <p class="text-gray-500 text-sm mt-1">Manajemen akun dan hak akses pengguna SIM GenBI.</p>
     </div>
 
+    @php
+        // Mengambil data semua user yang sedang meminta reset sandi pada halaman ini
+        $mintaResetUsers = $users->where('request_reset', true);
+        $totalMintaReset = $mintaResetUsers->count();
+    @endphp
+
+    @if ($totalMintaReset > 0)
+        <div
+            class="mb-6 p-4 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-2xl shadow-lg shadow-red-500/20 flex items-center justify-between gap-4 animate-fade-in-down relative z-20">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-white/20 rounded-xl backdrop-blur-sm animate-bounce flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-black text-[10px] uppercase tracking-widest text-red-100">Pemberitahuan Mendesak</p>
+                    <p class="text-sm font-bold text-white/95 mt-0.5">
+                        Ada <span class="underline decoration-white font-black">{{ $totalMintaReset }} Anggota</span> yang
+                        meminta reset kata sandi, yaitu:
+                        <span
+                            class="text-yellow-300 font-black bg-black/20 px-2 py-0.5 rounded-lg inline-block my-0.5 shadow-sm border border-white/10">
+                            {{ $mintaResetUsers->pluck('name')->implode(', ') }}
+                        </span>.
+                        Harap segera buatkan kata sandi baru.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if (session('success'))
         <div
             class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-sm font-bold flex items-center gap-3 shadow-sm animate-fade-in-down">
@@ -75,6 +108,8 @@
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Devisi &
                             Jurusan</th>
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Hak Akses</th>
+                        <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Status Akun
+                        </th>
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest text-center">
                             Aksi</th>
                     </tr>
@@ -150,6 +185,23 @@
                                     {{ $user->role }}
                                 </span>
                             </td>
+
+                            <td class="py-4 px-5">
+                                @if ($user->request_reset)
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-red-50 text-red-600 border border-red-100 animate-pulse shadow-sm">
+                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                        ⚠️ Minta Reset
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        Aktif
+                                    </span>
+                                @endif
+                            </td>
+
                             <td class="py-4 px-5 text-center">
                                 <div class="flex justify-center items-center gap-2">
                                     <button onclick="toggleModal('modalEditUser{{ $user->id }}')" title="Edit Data"
@@ -177,7 +229,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-16 text-center">
+                            <td colspan="6" class="py-16 text-center">
                                 <div class="flex flex-col items-center justify-center text-gray-400">
                                     <div class="bg-gray-50 p-4 rounded-full mb-3">
                                         <svg class="w-10 h-10 opacity-40 text-gray-500" fill="none"
@@ -288,23 +340,12 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jabatan Struktur</label>
                         <select name="jabatan"
                             class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-                            <option value="" {{ empty($user->jabatan) ? 'selected' : '' }}>-- Anggota Biasa --
-                            </option>
-                            <option value="Ketua Devisi Pendidikan & Kebudayaan"
-                                {{ $user->jabatan == 'Ketua Devisi Pendidikan & Kebudayaan' ? 'selected' : '' }}>Ketua
-                                Devisi Pendidikan</option>
-                            <option value="Ketua Devisi Pengabdian Masyarakat"
-                                {{ $user->jabatan == 'Ketua Devisi Pengabdian Masyarakat' ? 'selected' : '' }}>Ketua Devisi
-                                Pengmas</option>
-                            <option value="Ketua Devisi Pubdok"
-                                {{ $user->jabatan == 'Ketua Devisi Pubdok' ? 'selected' : '' }}>Ketua Devisi Pubdok
-                            </option>
-                            <option value="Ketua Devisi Kewirausahaan"
-                                {{ $user->jabatan == 'Ketua Devisi Kewirausahaan' ? 'selected' : '' }}>Ketua Devisi
-                                Wirausaha</option>
-                            <option value="Ketua Devisi Lingkungan Hidup"
-                                {{ $user->jabatan == 'Ketua Devisi Lingkungan Hidup' ? 'selected' : '' }}>Ketua Devisi
-                                Lingkungan</option>
+                            <option value="">-- Anggota Biasa --</option>
+                            <option value="Ketua Devisi Pendidikan & Kebudayaan">Ketua Devisi Pendidikan</option>
+                            <option value="Ketua Devisi Pengabdian Masyarakat">Ketua Devisi Pengmas</option>
+                            <option value="Ketua Devisi Pubdok">Ketua Devisi Pubdok</option>
+                            <option value="Ketua Devisi Kewirausahaan">Ketua Devisi Wirausaha</option>
+                            <option value="Ketua Devisi Lingkungan Hidup">Ketua Devisi Lingkungan</option>
                         </select>
                     </div>
                     <div>
@@ -363,6 +404,7 @@
                         <input type="text" name="name" value="{{ $user->name }}" required
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label
@@ -386,7 +428,7 @@
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Ganti
                             Password</label>
-                        <input type="password" name="password" placeholder="Kosongkan jika tidak ingin diganti"
+                        <input type="password" name="password" placeholder="Masukkan sandi baru untuk mereset"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 placeholder-gray-400">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -452,7 +494,7 @@
                             class="px-5 py-3 text-gray-500 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl text-sm transition">Batal</button>
                         <button type="submit"
                             class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-md shadow-emerald-500/30 transition hover:-translate-y-0.5">Update
-                            Data</button>
+                            Data & Sandi</button>
                     </div>
                 </form>
             </div>
