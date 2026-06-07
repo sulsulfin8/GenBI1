@@ -7,8 +7,9 @@
     </div>
 
     @php
-        // Mengambil data semua user yang sedang meminta reset sandi pada halaman ini
-        $mintaResetUsers = $users->where('request_reset', true);
+        // PERBAIKAN: Ambil langsung dari seluruh database agar notifikasi tetap muncul
+        // meskipun sedang mencari nama orang lain atau berada di halaman (pagination) lain.
+        $mintaResetUsers = \App\Models\User::where('request_reset', true)->get();
         $totalMintaReset = $mintaResetUsers->count();
     @endphp
 
@@ -314,7 +315,7 @@
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Email /
                         Username</label>
-                    <input type="email" name="email" placeholder="budi@email.com" required
+                    <input type="text" name="email" placeholder="Contoh: budisantoso123" required
                         class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                 </div>
                 <div>
@@ -422,7 +423,7 @@
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Email /
                             Username</label>
-                        <input type="email" name="email" value="{{ $user->email }}" required
+                        <input type="text" name="email" value="{{ $user->email }}" required
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
                     <div>
@@ -494,7 +495,7 @@
                             class="px-5 py-3 text-gray-500 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl text-sm transition">Batal</button>
                         <button type="submit"
                             class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-md shadow-emerald-500/30 transition hover:-translate-y-0.5">Update
-                            Data & Sandi</button>
+                            Data</button>
                     </div>
                 </form>
             </div>

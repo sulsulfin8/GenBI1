@@ -37,11 +37,11 @@
                     <div class="relative">
                         <select name="jenis" onchange="this.form.submit()"
                             class="w-full border-2 border-gray-200/80 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 bg-white font-extrabold text-gray-700 cursor-pointer appearance-none transition-all shadow-sm">
-                            <option value="Rancang Anggaran" {{ $jenis == 'Rancang Anggaran' ? 'selected' : '' }}>💰 Rancang
+                            <option value="Rancang Anggaran" {{ $jenis == 'Rancang Anggaran' ? 'selected' : '' }}> Rancang
                                 Anggaran</option>
-                            <option value="Absensi" {{ $jenis == 'Absensi' ? 'selected' : '' }}>📝 Absensi Kehadiran
+                            <option value="Absensi" {{ $jenis == 'Absensi' ? 'selected' : '' }}> Absensi Kehadiran
                             </option>
-                            <option value="Poin Keaktifan" {{ $jenis == 'Poin Keaktifan' ? 'selected' : '' }}>🏆 Poin
+                            <option value="Poin Keaktifan" {{ $jenis == 'Poin Keaktifan' ? 'selected' : '' }}> Poin
                                 Keaktifan</option>
                         </select>
                         <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
@@ -212,7 +212,7 @@
                                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
                                                 </path>
                                             </svg>
-                                            Cetak Word
+                                            Word
                                         </a>
                                     @elseif ($laporan->jenis_laporan == 'Poin Keaktifan')
                                         <a href="{{ route('laporan.poin', ['bulan' => request('bulan'), 'tahun' => request('tahun')]) }}"
@@ -236,7 +236,7 @@
                                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
                                                 </path>
                                             </svg>
-                                            Cetak PDF
+                                            PDF
                                         </a>
                                     @else
                                         <a href="{{ route('laporan.cetakWord', ['devisi' => urlencode($laporan->devisi)]) }}"
@@ -249,7 +249,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
-                                            Pratinjau
+                                            Lihat
                                         </a>
 
                                         <a href="{{ route('laporan.cetakWord', ['devisi' => urlencode($laporan->devisi), 'download' => 1]) }}"
@@ -260,7 +260,7 @@
                                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
                                                 </path>
                                             </svg>
-                                            Cetak Word
+                                            Word
                                         </a>
                                     @endif
 

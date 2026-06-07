@@ -97,9 +97,8 @@
             <tr style="background-color: #f2f2f2;">
                 <th width="5%">No</th>
                 <th width="45%">Nama Anggota</th>
-                <th width="20%">NIM</th>
-                <th width="15%">Status</th>
-                <th width="15%">Paraf</th>
+                <th width="25%">NIM</th>
+                <th width="25%">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -109,7 +108,6 @@
                     <td>{{ $abs->nama_lengkap }}</td>
                     <td class="text-center">{{ $abs->nim ?? '-' }}</td>
                     <td class="text-center">{{ $abs->status }}</td>
-                    <td></td>
                 </tr>
             @endforeach
         </tbody>
@@ -132,41 +130,25 @@
         ];
         $tglIndo = date('d') . ' ' . $bulan[date('F')] . ' ' . date('Y');
     @endphp
-    <table style="width: 100%; border: none; margin-top: 30px; border-collapse: collapse; table-layout: fixed;">
+
+    <br><br>
+    <table style="width: 100%; border: none; border-collapse: collapse;">
         <tr>
-            <td style="width: 50%; border: none;"></td>
+            <td style="width: 30%; text-align: center; vertical-align: bottom; border: none;">
+                <span style="font-size: 10pt; color: black;">Scan untuk lihat keaslian</span><br><br>
+                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="70">
+            </td>
 
-            <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
+            <td style="width: 30%; border: none;"></td>
 
-                <table style="width: 100%; border: none; border-collapse: collapse;">
-                    <tr>
-                        <td style="width: 40%; border: none;"></td>
-                        <td
-                            style="width: 60%; text-align: center; font-family: Arial, sans-serif; font-size: 12px; padding-bottom: 5px;">
-                            Kolaka, {{ now()->format('d M Y') }}<br>
-                            Ketua Umum
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
-                            <div
-                                style="font-family: Arial, sans-serif; font-size: 10px; color: #000; margin-bottom: 3px;">
-                                Scan untuk lihat keaslian
-                            </div>
-                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="65px"
-                                style="display: block; margin: 0 auto;">
-                        </td>
-
-                        <td style="width: 60%; text-align: center; vertical-align: bottom; border: none;">
-                            <div style="font-family: Arial, sans-serif; font-size: 12px; margin-top: 40px;">
-                                ( .............................. )
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
+                <p style="margin: 0;">Kolaka, {{ $tglIndo }}</p>
+                <p style="margin: 0;">Sekretaris Devisi,</p>
+                <br><br><br><br>
+                <p style="margin: 0; font-weight: bold;">( ........................................ )</p>
             </td>
         </tr>
     </table>
+</body>
 
 </html>

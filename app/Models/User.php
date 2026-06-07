@@ -22,6 +22,8 @@ class User extends Authenticatable
         'photo',
         'jabatan',
         'request_reset',
+        'otp',
+        'otp_expires_at',
     ];
 
     protected $hidden = [

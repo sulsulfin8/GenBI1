@@ -122,9 +122,8 @@
             </div>
 
             <div class="mb-10">
-                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Selamat Datang! <span
-                        class="inline-block animate-bounce ml-1">👋</span></h2>
-                <p class="text-gray-500 mt-2 text-sm font-medium">Silakan masuk menggunakan akun Anda.</p>
+                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Selamat Datang!
+                    <p class="text-gray-500 mt-2 text-sm font-medium">Silakan masuk menggunakan akun Anda.</p>
             </div>
 
             @if (session('success'))

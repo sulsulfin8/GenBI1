@@ -48,11 +48,17 @@ class PoinController extends Controller
         }
         // ==========================================
 
-        $infoPath = storage_path('app/genbi_info.json');
-        $info = file_exists($infoPath) ? json_decode(file_get_contents($infoPath)) : (object) [
-            'pelanggaran' => "Alpa: +10 Poin\nIzin: +1 Poin",
-            'apresiasi' => "Rajin: -3 Poin\nAktif: -2 Poin"
-        ];
+        // ==========================================
+        // Mengambil aturan poin dari database (tabel infos)
+        $info = \App\Models\Info::first();
+        if (!$info) {
+            $info = (object) [
+                'pelanggaran' => "Alpa: +10 Poin\nIzin: +1 Poin",
+                'apresiasi' => "Rajin: -3 Poin\nAktif: -2 Poin",
+                'qris' => "",
+                'sp' => ""
+            ];
+        }
 
         $rekapData = [];
         $kegiatanAktif = Kegiatan::pluck('nama_kegiatan');

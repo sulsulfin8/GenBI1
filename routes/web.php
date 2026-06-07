@@ -117,5 +117,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rancangan-anggaran', [AnggaranController::class, 'index'])->name('anggaran');
         Route::post('/rancangan-anggaran/store', [AnggaranController::class, 'store'])->name('anggaran.store');
     });
-    Route::get('/verifikasi-dokumen', [\App\Http\Controllers\LaporanController::class, 'verifikasiDokumen'])->name('verifikasi.dokumen');
 });
+// ==========================================
+// 3. RUTE VERIFIKASI QR CODE (Bisa diakses tanpa login)
+// ==========================================
+Route::get('/verifikasi-dokumen', [\App\Http\Controllers\LaporanController::class, 'verifikasiDokumen'])->name('verifikasi.dokumen');
+Route::get('/verifikasi-laporan/{jenis}/{id}', [App\Http\Controllers\LaporanController::class, 'verifikasi'])->name('laporan.verifikasi');

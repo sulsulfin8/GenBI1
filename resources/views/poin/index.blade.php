@@ -1,21 +1,6 @@
 @extends('layout.app')
 
 @section('content')
-    @php
-        $infoPath = storage_path('app/genbi_info.json');
-        if (file_exists($infoPath)) {
-            $info = json_decode(file_get_contents($infoPath));
-        } else {
-            $info = (object) [
-                'pelanggaran' =>
-                    "Alpa (Tidak Hadir Tanpa Laporan): +10 Poin\nIzin (Tidak Hadir Dengan Laporan): +1 Poin\nAbsen Zoom/Rapat Tanpa Konfirmasi: +5 Poin\nKetahuan Berbohong: +50 Poin\nTindakan Negatif ke Komisariat: +100 Poin",
-                'qris' =>
-                    "Tidak kumpul target sama sekali: +8 Poin\nKurang dari target: +4 Poin\nLupa Up Scan Qris: +2 Poin",
-                'apresiasi' => "Rajin: -3 Poin\nAktif: -2 Poin",
-                'sp' => "SP 1 (Komisariat): 25\nSP 2 (Wilayah): 50\nSP 3 (Pembina): >50",
-            ];
-        }
-    @endphp
 
     @if (session('success'))
         <div
@@ -460,7 +445,7 @@
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                 </path>
                             </svg>
-                            Edit Keterangan Saja
+                            Edit Keterangan
                         </button>
                     @else
                         <div></div>
@@ -499,7 +484,7 @@
                                 <select id="pilihanAturan" onchange="setNilaiPoin()" required
                                     class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 cursor-pointer font-semibold text-gray-700 appearance-none transition-all">
                                     <option value="">-- Silakan Pilih Kategori --</option>
-                                    <optgroup label="🔴 Pelanggaran (+ Poin)">
+                                    <optgroup label="  Pelanggaran (+ Poin)">
                                         @php $pelanggaranArr = explode("\n", str_replace("\r", "", $info->pelanggaran ?? "")); @endphp
                                         @foreach ($pelanggaranArr as $p)
                                             @if (trim($p) != '')
@@ -507,9 +492,14 @@
                                                     $split = explode(':', $p);
                                                     $label = trim($split[0]);
                                                     $lowerLabel = strtolower(trim($label));
+
+                                                    // PERBAIKAN: Memperluas filter agar mendeteksi variasi kata Alpa, Izin, Tidak Hadir, (A), dan (I)
                                                     $isAbsensi =
-                                                        strpos($lowerLabel, 'alpa') === 0 ||
-                                                        strpos($lowerLabel, 'izin') === 0;
+                                                        str_contains($lowerLabel, 'alpa') ||
+                                                        str_contains($lowerLabel, 'izin') ||
+                                                        str_contains($lowerLabel, 'tidak hadir') ||
+                                                        str_contains($lowerLabel, '(a)') ||
+                                                        str_contains($lowerLabel, '(i)');
                                                 @endphp
                                                 @if (!$isAbsensi)
                                                     @php
@@ -620,17 +610,15 @@
                 const badgeSP = document.getElementById('detailStatusSP');
                 badgeSP.innerText = sp;
                 badgeSP.className = "px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mt-1 inline-block ";
+
                 if (sp === 'Aman') badgeSP.className += 'bg-green-100 text-green-600';
                 else if (sp === 'SP 1') badgeSP.className += 'bg-yellow-100 text-yellow-600';
                 else if (sp === 'SP 2') badgeSP.className += 'bg-orange-100 text-orange-600';
                 else if (sp === 'SP 3') badgeSP.className += 'bg-red-100 text-red-600';
 
-                const ulKet = document.getElementById('detailTeksKeterangan');
-                ulKet.innerHTML = "";
-
+                // Bersihkan dan siapkan teks untuk diedit
                 let cleanedKeteranganArray = [];
                 if (!keterangan || keterangan === "-" || keterangan.trim() === "") {
-                    ulKet.innerHTML = "<li class='italic text-gray-400'>Belum ada catatan aktivitas poin.</li>";
                     rawKeteranganGlobal = "";
                 } else {
                     const splitKet = keterangan.includes('|') ? keterangan.split("|") : [keterangan];
@@ -639,23 +627,29 @@
                         textItem = textItem.replace(/(Kegiatan Lain\s*:\s*)+/gi, "");
                         if (textItem !== "" && textItem !== "Absensi ()") {
                             cleanedKeteranganArray.push(textItem);
-                            let li = document.createElement('li');
-                            li.className =
-                                "flex items-start gap-2 relative pl-4 before:content-[''] before:absolute before:left-0 before:top-2.5 before:w-1.5 before:h-1.5 before:bg-blue-400 before:rounded-full font-medium";
-                            li.innerHTML = `<span>${textItem}</span>`;
-                            ulKet.appendChild(li);
                         }
                     });
                     rawKeteranganGlobal = cleanedKeteranganArray.join(' | ');
                 }
 
                 const formEdit = document.getElementById('formEditKeterangan');
+                const boxBaca = document.getElementById('boxBacaKeterangan');
+                const footerInfo = document.getElementById('footerModalKeterangan');
+
                 if (formEdit) {
-                    formEdit.classList.add('hidden');
-                    document.getElementById('boxBacaKeterangan').classList.remove('hidden');
-                    document.getElementById('footerModalKeterangan').classList.remove('hidden');
+                    // Isi nilai ke dalam form
                     document.getElementById('detailNimEdit').value = nim;
+                    document.getElementById('detailTextareaEdit').value = rawKeteranganGlobal;
+
+                    // Langsung aktifkan form edit dan sembunyikan mode baca lama
+                    formEdit.classList.remove('hidden');
+                    boxBaca.classList.add('hidden');
+
+                    if (footerInfo) {
+                        footerInfo.classList.add('hidden');
+                    }
                 }
+
                 const modal = document.getElementById('modalKeterangan');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -663,16 +657,12 @@
             }
 
             function mulaiEditKet() {
-                document.getElementById('boxBacaKeterangan').classList.add('hidden');
-                document.getElementById('footerModalKeterangan').classList.add('hidden');
-                document.getElementById('formEditKeterangan').classList.remove('hidden');
-                document.getElementById('detailTextareaEdit').value = rawKeteranganGlobal;
+                // Fungsi ini dibiarkan kosong karena form edit sudah langsung terbuka
             }
 
             function batalEditKet() {
-                document.getElementById('boxBacaKeterangan').classList.remove('hidden');
-                document.getElementById('footerModalKeterangan').classList.remove('hidden');
-                document.getElementById('formEditKeterangan').classList.add('hidden');
+                // PERBAIKAN: Jika klik batal, langsung tutup keseluruhan popup
+                tutupModalKeterangan();
             }
 
             function tutupModalKeterangan() {

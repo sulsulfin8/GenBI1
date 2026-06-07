@@ -45,6 +45,7 @@ class AnggaranController extends Controller
         $kegiatan = Kegiatan::find($request->kegiatan_id);
         $kegiatan->update([
             'nama_kegiatan' => $request->nama_kegiatan,
+            'pengertian'    => $request->pengertian,
             'tujuan' => $request->tujuan,
             'manfaat' => $request->manfaat,
             'waktu' => $request->waktu,

@@ -3,70 +3,114 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Laporan RAB - {{ $namaDevisi }}</title>
+    <title>Laporan RAB</title>
     <style>
+        /* Pengaturan Ukuran Kertas A4 & Margin Standar Laporan */
         @page {
             size: 21cm 29.7cm;
-            margin: 2cm;
+            margin: 2cm 2cm 2cm 2.5cm;
         }
 
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
         }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
-
-        .uppercase {
-            text-transform: uppercase;
-        }
-
-        /* Gaya Khusus Tabel RAB */
-        table.tabel-rab {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 10px;
-            margin-bottom: 25px;
-        }
-
-        table.tabel-rab th,
-        table.tabel-rab td {
-            border: 1px solid black;
-            padding: 5px;
-            text-align: left;
-        }
-
-        table.tabel-rab th {
-            text-align: center;
-            background-color: #f2f2f2;
-        }
-
-        /* Gaya Khusus Kop Surat yang Konsisten (Seperti Laporan Absensi) */
-        table.kop-table {
+        /* Kop Surat */
+        table.kop-surat {
             width: 100%;
             border-bottom: 3px double black;
             margin-bottom: 20px;
             border-collapse: collapse;
         }
+
+        /* Tipografi Judul */
+        .judul-utama {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12pt;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            line-height: 1.3;
+        }
+
+        .teks-tebal {
+            font-weight: bold;
+        }
+
+        .spasi-bawah {
+            margin-bottom: 10px;
+        }
+
+        /* PERBAIKAN: Indentasi Paragraf agar sejajar dengan Teks Judul, bukan Angka */
+        .indent-a {
+            margin-left: 0px;
+        }
+
+        .indent-1 {
+            margin-left: 20px;
+        }
+
+        .indent-content {
+            margin-left: 50px;
+            /* Lebar ini disesuaikan agar pas di bawah teks sub-judul */
+            text-align: justify;
+        }
+
+        /* Tabel RAB Profesional */
+        table.tabel-rab {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        table.tabel-rab th,
+        table.tabel-rab td {
+            border: 1px solid black;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+
+        table.tabel-rab th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Helper Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .uang {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
 <body>
-    <table class="kop-table">
+
+    <!-- ================= KOP SURAT ================= -->
+    <table class="kop-surat">
         <tr>
-            <td width="15%" style="text-align: center; vertical-align: middle; padding: 10px 0;">
+            <td width="15%" style="text-align: center; vertical-align: middle; padding: 10px 0; border: none;">
                 @if ($logoL)
                     <img src="{{ $logoL }}" width="80" style="display: block; margin: 0 auto;">
                 @endif
             </td>
-
-            <td width="70%" style="text-align: center; line-height: 1.2; padding: 10px 0;">
+            <td width="70%" style="text-align: center; line-height: 1.2; padding: 10px 0; border: none;">
                 <b
                     style="font-size: 16pt; text-transform: uppercase;">{{ $kop->baris1 ?? 'GENERASI BARU INDONESIA (GenBI)' }}</b><br>
                 <b
@@ -76,8 +120,7 @@
                 <i style="font-size: 10pt;">{{ $kop->alamat ?? '' }}</i><br>
                 <i style="font-size: 10pt;">{{ $kop->kontak ?? '' }}</i>
             </td>
-
-            <td width="15%" style="text-align: center; vertical-align: middle; padding: 10px 0;">
+            <td width="15%" style="text-align: center; vertical-align: middle; padding: 10px 0; border: none;">
                 @if ($logoR)
                     <img src="{{ $logoR }}" width="80" style="display: block; margin: 0 auto;">
                 @endif
@@ -85,81 +128,118 @@
         </tr>
     </table>
 
+    <!-- ================= ISI LAPORAN (DINAMIS) ================= -->
     @foreach ($kegiatans as $kegiatan)
-        <div class="text-center bold uppercase" style="margin-top: 20px;">
-            <p style="margin: 2px 0;">PROGRAM KERJA</p>
-            <p style="margin: 2px 0;">DEVISI {{ $kegiatan->devisi }}</p>
-            <p style="margin: 2px 0;">GENBI KOMISARIAT USN KOLAKA TAHUN 2025-2026</p>
-            <p style="margin: 2px 0;">{{ $kegiatan->nama_kegiatan }}</p>
+        <!-- Judul Rancang Program -->
+        <div class="judul-utama">
+            RANCANGAN PROGRAM KERJA<br>
+            DEPARTEMEN {{ strtoupper($kegiatan->devisi) }}<br>
+            GENBI KOMISARIAT USN KOLAKA TAHUN {{ date('Y') }}-{{ date('Y') + 1 }}
         </div>
 
-        <br>
+        <!-- A. Nama Kegiatan -->
+        <div class="teks-tebal spasi-bawah indent-a">
+            A. &nbsp; {{ $kegiatan->nama_kegiatan }}
+        </div>
 
-        <p style="text-indent: 40px; text-align: justify; margin-bottom: 15px;">
-            {{ $kegiatan->nama_kegiatan }} merupakan program kerja yang berfokus pada... <i>(Tambahkan penjelasan
-                program kerja di sini jika diperlukan)</i>.
-        </p>
+        <!-- 1.1 Pengertian -->
+        <div class="teks-tebal indent-1" style="margin-bottom: 5px;">
+            1.1. Pengertian {{ $kegiatan->nama_kegiatan }}
+        </div>
+        <div class="indent-content spasi-bawah">
+            {!! nl2br(e($kegiatan->pengertian ?? '-')) !!}
+        </div>
 
-        <p class="bold uppercase" style="margin-bottom: 5px;">TUJUAN</p>
-        <p style="text-align: justify; margin-top: 0; margin-bottom: 15px;">{!! nl2br(e($kegiatan->tujuan)) !!}</p>
+        <!-- 1.2 Tujuan -->
+        <div class="teks-tebal indent-1" style="margin-bottom: 5px;">
+            1.2. Tujuan Kegiatan
+        </div>
+        <div class="indent-content spasi-bawah">
+            {!! nl2br(e($kegiatan->tujuan ?? '-')) !!}
+        </div>
 
-        <p class="bold uppercase" style="margin-bottom: 5px;">MANFAAT</p>
-        <p style="text-align: justify; margin-top: 0; margin-bottom: 15px;">{!! nl2br(e($kegiatan->manfaat)) !!}</p>
+        <!-- 1.3 Manfaat -->
+        <div class="teks-tebal indent-1" style="margin-bottom: 5px;">
+            1.3. Manfaat Kegiatan
+        </div>
+        <div class="indent-content spasi-bawah">
+            {!! nl2br(e($kegiatan->manfaat ?? '-')) !!}
+        </div>
 
-        <p class="bold uppercase" style="margin-bottom: 5px;">WAKTU DAN TEMPAT</p>
-        <p style="margin-top: 0; margin-bottom: 15px;">{{ $kegiatan->waktu }}, {{ $kegiatan->tempat }}</p>
+        <!-- 1.4 Waktu dan Tempat -->
+        <div class="teks-tebal indent-1" style="margin-bottom: 5px;">
+            1.4. Waktu dan Tempat
+        </div>
+        <div class="indent-content spasi-bawah">
+            Adapun waktu dan tempat pelaksanaan kegiatan ini adalah sebagai berikut:<br>
+            Waktu &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {{ $kegiatan->waktu ?? '-' }}<br>
+            Tempat &nbsp;&nbsp;&nbsp;&nbsp;: {{ $kegiatan->tempat ?? '-' }}
+        </div>
 
-        <p class="bold uppercase" style="margin-bottom: 5px;">RAB</p>
-        <table class="tabel-rab">
-            <thead>
-                <tr>
-                    <th width="35%">Nama Barang</th>
-                    <th width="20%">Harga Satuan</th>
-                    <th width="10%">Qty</th>
-                    <th width="15%">Satuan</th>
-                    <th width="20%">Jumlah</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php $total = 0; @endphp
-                @foreach ($kegiatan->anggarans as $rab)
+        <!-- 1.5 RAB -->
+        <div class="teks-tebal indent-1" style="margin-bottom: 5px;">
+            1.5. Rencana Anggaran Biaya (RAB)
+        </div>
+        <div class="indent-content">
+            <table class="tabel-rab">
+                <thead>
                     <tr>
-                        <td>{{ $rab->nama_barang }}</td>
-                        <td>Rp. {{ number_format($rab->harga_satuan, 0, ',', '.') }}</td>
-                        <td style="text-align: center;">{{ $rab->jumlah }}</td>
-                        <td style="text-align: center;">{{ $rab->satuan }}</td>
-                        <td>Rp. {{ number_format($rab->total, 0, ',', '.') }}</td>
+                        <th style="width: 5%;">No</th>
+                        <th style="width: 33%;">Nama Keperluan</th>
+                        <th style="width: 22%;" class="nowrap">Harga Satuan</th>
+                        <th style="width: 8%;">Vol</th>
+                        <th style="width: 10%;">Satuan</th>
+                        <th style="width: 22%;" class="nowrap">Jumlah (Rp)</th>
                     </tr>
-                    @php $total += $rab->total; @endphp
-                @endforeach
-                <tr>
-                    <td colspan="4" style="text-align: right; font-weight: bold; padding-right: 10px;">Total
-                        Keseluruhan</td>
-                    <td style="font-weight: bold;">Rp. {{ number_format($total, 0, ',', '.') }}</td>
-                </tr>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @php $totalSeluruh = 0; @endphp
+                    @forelse($kegiatan->anggarans as $index => $item)
+                        @php
+                            $subtotal = $item->harga_satuan * $item->jumlah;
+                            $totalSeluruh += $subtotal;
+                        @endphp
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td>{{ $item->nama_barang }}</td>
+                            <td class="uang">Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
+                            <td class="text-center">{{ $item->jumlah }}</td>
+                            <td class="text-center">{{ $item->satuan }}</td>
+                            <td class="uang">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center">Belum ada rincian anggaran yang diinputkan.</td>
+                        </tr>
+                    @endforelse
+                    <tr>
+                        <td colspan="5" class="text-right teks-tebal">TOTAL KESELURUHAN</td>
+                        <td class="uang teks-tebal">Rp {{ number_format($totalSeluruh, 0, ',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
+        <!-- Pemisah Halaman (Jika bukan kegiatan terakhir di divisi yang sama) -->
         @if (!$loop->last)
             <div style="page-break-after: always;"></div>
         @endif
     @endforeach
-    <table style="width: 100%; border: none; margin-top: 30px; border-collapse: collapse; table-layout: fixed;">
+
+    <!-- ================= TANDA TANGAN ================= -->
+    <table style="width: 100%; border: none; margin-top: 40px; border-collapse: collapse; table-layout: fixed;">
         <tr>
             <td style="width: 50%; border: none;"></td>
-
             <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
-
                 <table style="width: 100%; border: none; border-collapse: collapse;">
                     <tr>
                         <td style="width: 40%; border: none;"></td>
                         <td
-                            style="width: 60%; text-align: center; font-family: Arial, sans-serif; font-size: 12px; padding-bottom: 5px;">
-                            Kolaka, {{ now()->format('d M Y') }}<br>
+                            style="width: 60%; text-align: center; font-family: Arial, sans-serif; font-size: 12px; padding-bottom: 5px; border: none;">
+                            Kolaka, {{ now()->format('d F Y') }}<br>
                             Ketua Umum
                         </td>
                     </tr>
-
                     <tr>
                         <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
                             <div
@@ -169,9 +249,8 @@
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="65px"
                                 style="display: block; margin: 0 auto;">
                         </td>
-
                         <td style="width: 60%; text-align: center; vertical-align: bottom; border: none;">
-                            <div style="font-family: Arial, sans-serif; font-size: 12px; margin-top: 40px;">
+                            <div style="font-family: Arial, sans-serif; font-size: 12px; margin-top: 50px;">
                                 ( .............................. )
                             </div>
                         </td>
@@ -180,5 +259,7 @@
             </td>
         </tr>
     </table>
+
+</body>
 
 </html>

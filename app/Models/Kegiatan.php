@@ -12,6 +12,7 @@ class Kegiatan extends Model
     protected $fillable = [
         'devisi',
         'nama_kegiatan',
+        'pengertian',
         'tujuan',   // Tambahkan ini
         'manfaat',  // Tambahkan ini
         'waktu',

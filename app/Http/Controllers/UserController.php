@@ -29,7 +29,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,anggota,sekretaris,bendahara,pembina',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto dikembalikan
@@ -60,7 +60,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'email' => 'required|string|max:255|unique:users,email,' . $id,
             'role' => 'required|in:admin,anggota,sekretaris,bendahara,pembina',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto dikembalikan
         ]);

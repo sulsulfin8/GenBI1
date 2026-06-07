@@ -21,10 +21,10 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
-
+        // Hapus pengecekan filter email, langsung paksa sistem 
+        // mencocokkan inputan dengan kolom 'email' (tempat username disimpan)
         $credentials = [
-            $loginType => $request->login,
+            'email' => $request->login,
             'password' => $request->password
         ];
 
@@ -33,7 +33,7 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', 'Username (Nama/Email) atau Password salah!');
+        return back()->with('error', 'Username/Email atau Password salah!');
     }
 
     public function logout(Request $request)
@@ -52,55 +52,65 @@ class AuthController extends Controller
 
     public function processForgot(Request $request)
     {
-        $request->validate([
-            'tipe' => 'required|in:pengurus,anggota',
-        ]);
+        // TAHAP 1: MINTA OTP (Berlaku untuk semua pengguna sistem)
+        if ($request->input('action') === 'send_otp') {
+            $request->validate(['login' => 'required']);
 
-        if ($request->tipe === 'pengurus') {
-            // --- LOGIKA PENGURUS (Bisa ganti sandi mandiri via Email) ---
+            // Mencari user berdasarkan email/username yang didaftarkan
+            $user = User::where('email', $request->login)->first();
+
+            if (!$user) return back()->with('error', 'Alamat Email / Username tidak ditemukan!');
+
+            // Generate 6 digit OTP acak
+            $otp = rand(100000, 999999);
+            $user->otp = $otp;
+            $user->otp_expires_at = now()->addMinutes(10); // Berlaku selama 10 menit
+            $user->save();
+
+            // Proses Pengiriman Email
+            try {
+                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\n\nKode OTP reset kata sandi Anda adalah: {$otp}\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun.", function ($message) use ($user) {
+                    $message->to($user->email)->subject('Kode OTP Reset Sandi GenBI');
+                });
+            } catch (\Exception $e) {
+                return back()->with('error', 'Gagal mengirim email. Pastikan koneksi internet & pengaturan SMTP .env sudah benar!');
+            }
+
+            return back()->with([
+                'success' => 'Kode OTP berhasil dikirim! Silakan cek Kotak Masuk atau folder Spam email Anda.',
+                'step' => 'otp',
+                'email' => $user->email
+            ]);
+        }
+
+        // TAHAP 2: VERIFIKASI OTP & JALANKAN RESET SANDI
+        elseif ($request->input('action') === 'reset') {
             $request->validate([
-                'login' => 'required|email',
+                'login' => 'required',
+                'otp' => 'required|numeric',
                 'password' => 'required|min:6'
             ]);
 
             $user = User::where('email', $request->login)->first();
 
-            if (!$user) {
-                return back()->with('error', 'Akun Pengurus dengan email tersebut tidak ditemukan!');
-            }
-            if ($user->role === 'anggota') {
-                return back()->with('error', 'Akun ini terdaftar sebagai Anggota, silakan pilih tipe akun Anggota!');
+            // Cek validasi kecocokan OTP dan masa kedaluwarsa
+            if (!$user || $user->otp != $request->otp || now()->greaterThan($user->otp_expires_at)) {
+                return back()->with([
+                    'error' => 'Kode OTP salah atau sudah kedaluwarsa!',
+                    'step' => 'otp',
+                    'email' => $request->login
+                ]);
             }
 
-            // Ubah password langsung
-            $user->password = Hash::make($request->password);
+            // Simpan Password Baru
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+            $user->otp = null;
+            $user->otp_expires_at = null;
             $user->save();
 
-            return redirect()->route('login')->with('success', 'Kata sandi berhasil diperbarui! Silakan login.');
-        } else {
-            // --- LOGIKA ANGGOTA (Hanya mengirim permintaan ke Admin) ---
-            $request->validate([
-                'login' => 'required|string',
-                'nim' => 'required|string',
-            ]);
-
-            // Cocokkan Nama dan NIM
-            $user = User::where('name', $request->login)
-                ->where('nim', $request->nim)
-                ->first();
-
-            if (!$user) {
-                return back()->with('error', 'Data tidak ditemukan! Pastikan Nama dan NIM sesuai dengan profil Anda.');
-            }
-            if ($user->role !== 'anggota') {
-                return back()->with('error', 'Akun ini terdaftar sebagai Pengurus, silakan pilih tipe akun Pengurus!');
-            }
-
-            // Tandai akun ini sedang meminta reset password (notifikasi ke admin)
-            $user->request_reset = true;
-            $user->save();
-
-            return redirect()->route('login')->with('success', 'Permintaan terkirim! Silakan hubungi Admin/Sekretaris untuk mendapatkan sandi baru.');
+            return redirect()->route('login')->with('success', 'Berhasil! Kata sandi baru Anda telah aktif. Silakan login.');
         }
+
+        return back()->with('error', 'Aksi tidak valid.');
     }
 }
