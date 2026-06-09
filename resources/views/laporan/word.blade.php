@@ -227,39 +227,33 @@
     @endforeach
 
     <!-- ================= TANDA TANGAN ================= -->
-    <table style="width: 100%; border: none; margin-top: 40px; border-collapse: collapse; table-layout: fixed;">
+    <br><br>
+    <table style="width: 100%; border: none; border-collapse: collapse;">
         <tr>
             <td style="width: 50%; border: none;"></td>
-            <td style="width: 50%; text-align: center; border: none; vertical-align: bottom;">
-                <table style="width: 100%; border: none; border-collapse: collapse;">
-                    <tr>
-                        <td style="width: 40%; border: none;"></td>
-                        <td
-                            style="width: 60%; text-align: center; font-family: Arial, sans-serif; font-size: 12px; padding-bottom: 5px; border: none;">
-                            Kolaka, {{ now()->format('d F Y') }}<br>
-                            Ketua Umum
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
-                            <div
-                                style="font-family: Arial, sans-serif; font-size: 10px; color: #000; margin-bottom: 3px;">
-                                Scan untuk lihat keaslian
-                            </div>
-                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="65px"
-                                style="display: block; margin: 0 auto;">
-                        </td>
-                        <td style="width: 60%; text-align: center; vertical-align: bottom; border: none;">
-                            <div style="font-family: Arial, sans-serif; font-size: 12px; margin-top: 50px;">
-                                ( .............................. )
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <td style="width: 50%; text-align: center; vertical-align: bottom; border: none;">
+                <p style="margin: 0;">Kolaka, {{ now()->format('d M Y') }}</p>
+                <p style="margin: 0;">Ketua Umum,</p>
+
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    @if ($isVerifikasi)
+                        @if (!empty($adminData->ttd))
+                            <!-- UKURAN TANDA TANGAN DIPERBESAR MENJADI 110 -->
+                            <img src="{{ $adminData->ttd }}" height="110">
+                        @else
+                            <div style="height: 110px;"></div>
+                        @endif
+                    @else
+                        <!-- UKURAN QR CODE JUGA SEDIKIT DIPERBESAR -->
+                        <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="80">
+                    @endif
+                </div>
+
+                <p style="margin: 0; font-weight: bold;">(
+                    {{ $adminData->nama ?? '........................................' }} )</p>
             </td>
         </tr>
     </table>
-
 </body>
 
 </html>

@@ -28,8 +28,9 @@ class AnggaranController extends Controller
 
         // 4. Eksekusi query
         $kegiatans = $query->get();
+        $devisis = \App\Models\Devisi::all();
 
-        return view('anggaran.index', compact('kegiatans'));
+        return view('anggaran.index', compact('kegiatans', 'devisis'));
     }
 
     public function store(Request $request)

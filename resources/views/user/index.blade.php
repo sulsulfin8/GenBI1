@@ -7,8 +7,7 @@
     </div>
 
     @php
-        // PERBAIKAN: Ambil langsung dari seluruh database agar notifikasi tetap muncul
-        // meskipun sedang mencari nama orang lain atau berada di halaman (pagination) lain.
+        // Mengambil data semua user yang sedang meminta reset sandi pada halaman ini
         $mintaResetUsers = \App\Models\User::where('request_reset', true)->get();
         $totalMintaReset = $mintaResetUsers->count();
     @endphp
@@ -109,8 +108,6 @@
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Devisi &
                             Jurusan</th>
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Hak Akses</th>
-                        <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Status Akun
-                        </th>
                         <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest text-center">
                             Aksi</th>
                     </tr>
@@ -186,23 +183,6 @@
                                     {{ $user->role }}
                                 </span>
                             </td>
-
-                            <td class="py-4 px-5">
-                                @if ($user->request_reset)
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-red-50 text-red-600 border border-red-100 animate-pulse shadow-sm">
-                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                        ⚠️ Minta Reset
-                                    </span>
-                                @else
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                        Aktif
-                                    </span>
-                                @endif
-                            </td>
-
                             <td class="py-4 px-5 text-center">
                                 <div class="flex justify-center items-center gap-2">
                                     <button onclick="toggleModal('modalEditUser{{ $user->id }}')" title="Edit Data"
@@ -230,7 +210,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-16 text-center">
+                            <td colspan="5" class="py-16 text-center">
                                 <div class="flex flex-col items-center justify-center text-gray-400">
                                     <div class="bg-gray-50 p-4 rounded-full mb-3">
                                         <svg class="w-10 h-10 opacity-40 text-gray-500" fill="none"
@@ -291,7 +271,8 @@
                 </button>
             </div>
 
-            <form action="{{ route('users.store') }}" method="POST" class="p-6 space-y-4 overflow-y-auto">
+            <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data"
+                class="p-6 space-y-4 overflow-y-auto">
                 @csrf
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Nama
@@ -315,7 +296,7 @@
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Email /
                         Username</label>
-                    <input type="text" name="email" placeholder="Contoh: budisantoso123" required
+                    <input type="email" name="email" placeholder="budi@email.com" required
                         class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                 </div>
                 <div>
@@ -323,6 +304,7 @@
                     <input type="password" name="password" placeholder="Minimal 6 karakter" required
                         class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label
@@ -330,29 +312,18 @@
                         <select name="devisi"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
                             <option value="">-- Pilih Devisi --</option>
-                            <option value="Pendidikan & Kebudayaan">Pendidikan</option>
-                            <option value="Pengabdian Masyarakat">Pengabdian</option>
-                            <option value="Publikasi Dekorasi & Dokumentasi">Pubdok</option>
-                            <option value="Kewirausahaan">Kewirausahaan</option>
-                            <option value="Lingkungan Hidup">Lingkungan</option>
-                        </select>
-                    </div>
-                    <div class="mt-0">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jabatan Struktur</label>
-                        <select name="jabatan"
-                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-                            <option value="">-- Anggota Biasa --</option>
-                            <option value="Ketua Devisi Pendidikan & Kebudayaan">Ketua Devisi Pendidikan</option>
-                            <option value="Ketua Devisi Pengabdian Masyarakat">Ketua Devisi Pengmas</option>
-                            <option value="Ketua Devisi Pubdok">Ketua Devisi Pubdok</option>
-                            <option value="Ketua Devisi Kewirausahaan">Ketua Devisi Wirausaha</option>
-                            <option value="Ketua Devisi Lingkungan Hidup">Ketua Devisi Lingkungan</option>
+                            @foreach ($devisis as $dev)
+                                <option value="{{ $dev->nama_devisi }}"
+                                    {{ isset($user) && $user->devisi == $dev->nama_devisi ? 'selected' : '' }}>
+                                    {{ $dev->nama_devisi }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Hak Akses
                             (Role)</label>
-                        <select name="role" required
+                        <select name="role" id="roleTambah" required onchange="toggleTtdTambah()"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-bold text-primary-blue cursor-pointer">
                             <option value="anggota">Anggota</option>
                             <option value="sekretaris">Sekretaris</option>
@@ -360,6 +331,30 @@
                             <option value="admin">Admin</option>
                         </select>
                     </div>
+                </div>
+
+                <div id="containerTtdTambah" class="hidden">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Upload Tanda
+                        Tangan (Khusus Admin)</label>
+                    <input type="file" name="ttd" accept="image/png, image/jpeg, image/jpg"
+                        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
+                    <p class="text-[10px] text-gray-400 mt-1 italic">*Tanda tangan akan digunakan di seluruh dokumen
+                        laporan cetak (PNG background transparan disarankan).</p>
+                </div>
+
+                <div class="mt-0">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jabatan Struktur</label>
+                    <select name="jabatan"
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                        <option value="" {{ isset($user) && empty($user->jabatan) ? 'selected' : '' }}>-- Anggota
+                            Biasa --</option>
+                        @foreach ($devisis as $dev)
+                            <option value="Ketua Devisi {{ $dev->nama_devisi }}"
+                                {{ isset($user) && $user->jabatan == 'Ketua Devisi ' . $dev->nama_devisi ? 'selected' : '' }}>
+                                Ketua Devisi {{ $dev->nama_devisi }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
@@ -396,7 +391,7 @@
                     </button>
                 </div>
 
-                <form action="{{ route('users.update', $user->id) }}" method="POST"
+                <form action="{{ route('users.update', $user->id) }}" method="POST" enctype="multipart/form-data"
                     class="p-6 space-y-4 overflow-y-auto">
                     @csrf @method('PUT')
                     <div>
@@ -405,7 +400,6 @@
                         <input type="text" name="name" value="{{ $user->name }}" required
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label
@@ -423,7 +417,7 @@
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Email /
                             Username</label>
-                        <input type="text" name="email" value="{{ $user->email }}" required
+                        <input type="email" name="email" value="{{ $user->email }}" required
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
                     <div>
@@ -432,30 +426,27 @@
                         <input type="password" name="password" placeholder="Masukkan sandi baru untuk mereset"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 placeholder-gray-400">
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label
                                 class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Devisi</label>
                             <select name="devisi"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
+                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
                                 <option value="">-- Pilih Devisi --</option>
-                                <option value="Pendidikan & Kebudayaan"
-                                    {{ $user->devisi == 'Pendidikan & Kebudayaan' ? 'selected' : '' }}>Pendidikan</option>
-                                <option value="Pengabdian Masyarakat"
-                                    {{ $user->devisi == 'Pengabdian Masyarakat' ? 'selected' : '' }}>Pengabdian</option>
-                                <option value="Publikasi Dekorasi & Dokumentasi"
-                                    {{ $user->devisi == 'Publikasi Dekorasi & Dokumentasi' ? 'selected' : '' }}>Pubdok
-                                </option>
-                                <option value="Kewirausahaan" {{ $user->devisi == 'Kewirausahaan' ? 'selected' : '' }}>
-                                    Kewirausahaan</option>
-                                <option value="Lingkungan Hidup"
-                                    {{ $user->devisi == 'Lingkungan Hidup' ? 'selected' : '' }}>Lingkungan</option>
+                                @foreach ($devisis as $dev)
+                                    <option value="{{ $dev->nama_devisi }}"
+                                        {{ isset($user) && $user->devisi == $dev->nama_devisi ? 'selected' : '' }}>
+                                        {{ $dev->nama_devisi }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Hak
                                 Akses</label>
-                            <select name="role" required
+                            <select name="role" id="roleEdit{{ $user->id }}"
+                                onchange="toggleTtdEdit({{ $user->id }})" required
                                 class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-bold text-emerald-600 cursor-pointer">
                                 <option value="anggota" {{ $user->role == 'anggota' ? 'selected' : '' }}>Anggota</option>
                                 <option value="sekretaris" {{ $user->role == 'sekretaris' ? 'selected' : '' }}>Sekretaris
@@ -466,27 +457,52 @@
                             </select>
                         </div>
                     </div>
+                    <div id="containerTtdEdit{{ $user->id }}" class="{{ $user->role == 'admin' ? '' : 'hidden' }}">
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Tanda Tangan
+                            (Khusus Admin)
+                        </label>
+
+                        @if ($user->ttd)
+                            <div
+                                class="mb-3 p-3 bg-white border border-emerald-100 rounded-xl flex items-center gap-4 shadow-sm">
+                                <div
+                                    class="w-16 h-16 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 p-1">
+                                    <img src="{{ asset('storage/' . $user->ttd) }}" alt="Tanda Tangan"
+                                        class="max-w-full max-h-full object-contain">
+                                </div>
+                                <div>
+                                    <p class="text-xs font-extrabold text-gray-700">Tanda Tangan Saat Ini</p>
+                                    <p class="text-[10px] font-bold text-emerald-600 mt-0.5 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        TTD yang Tersimpan
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1">Ganti Tanda Tangan Baru
+                            (Opsional)</label>
+                        <input type="file" name="ttd" accept="image/png, image/jpeg, image/jpg"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
+                        <p class="text-[10px] text-gray-400 mt-1.5 italic">*Biarkan "No file chosen" jika Anda tidak ingin
+                            mengubah tanda tangan saat ini.</p>
+                    </div>
+
                     <div class="mt-0">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jabatan Struktur</label>
                         <select name="jabatan"
                             class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-                            <option value="" {{ empty($user->jabatan) ? 'selected' : '' }}>-- Anggota Biasa --
-                            </option>
-                            <option value="Ketua Devisi Pendidikan & Kebudayaan"
-                                {{ $user->jabatan == 'Ketua Devisi Pendidikan & Kebudayaan' ? 'selected' : '' }}>Ketua
-                                Devisi Pendidikan</option>
-                            <option value="Ketua Devisi Pengabdian Masyarakat"
-                                {{ $user->jabatan == 'Ketua Devisi Pengabdian Masyarakat' ? 'selected' : '' }}>Ketua Devisi
-                                Pengmas</option>
-                            <option value="Ketua Devisi Pubdok"
-                                {{ $user->jabatan == 'Ketua Devisi Pubdok' ? 'selected' : '' }}>Ketua Devisi Pubdok
-                            </option>
-                            <option value="Ketua Devisi Kewirausahaan"
-                                {{ $user->jabatan == 'Ketua Devisi Kewirausahaan' ? 'selected' : '' }}>Ketua Devisi
-                                Wirausaha</option>
-                            <option value="Ketua Devisi Lingkungan Hidup"
-                                {{ $user->jabatan == 'Ketua Devisi Lingkungan Hidup' ? 'selected' : '' }}>Ketua Devisi
-                                Lingkungan</option>
+                            <option value="" {{ isset($user) && empty($user->jabatan) ? 'selected' : '' }}>--
+                                Anggota Biasa --</option>
+                            @foreach ($devisis as $dev)
+                                <option value="Ketua Devisi {{ $dev->nama_devisi }}"
+                                    {{ isset($user) && $user->jabatan == 'Ketua Devisi ' . $dev->nama_devisi ? 'selected' : '' }}>
+                                    Ketua Devisi {{ $dev->nama_devisi }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -580,5 +596,33 @@
                 searchInput.value = val;
             }
         });
+
+        // ========================================================
+        // SCRIPT BARU: FUNGSI TOGGLE TANDA TANGAN (HANYA ADMIN)
+        // ========================================================
+
+        // Fungsi untuk Modal Tambah User
+        function toggleTtdTambah() {
+            const roleSelect = document.getElementById('roleTambah');
+            const containerTtd = document.getElementById('containerTtdTambah');
+
+            if (roleSelect.value === 'admin') {
+                containerTtd.classList.remove('hidden');
+            } else {
+                containerTtd.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk Modal Edit User
+        function toggleTtdEdit(userId) {
+            const roleSelect = document.getElementById('roleEdit' + userId);
+            const containerTtd = document.getElementById('containerTtdEdit' + userId);
+
+            if (roleSelect.value === 'admin') {
+                containerTtd.classList.remove('hidden');
+            } else {
+                containerTtd.classList.add('hidden');
+            }
+        }
     </script>
 @endsection

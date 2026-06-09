@@ -64,26 +64,36 @@
 <body class="bg-bg-main font-sans flex min-h-screen text-gray-800 overflow-hidden">
 
     <aside id="mainSidebar"
-        class="w-64 min-w-[16rem] bg-primary-blue flex flex-col justify-between z-10 shadow-xl sidebar-transition flex-shrink-0 border-r border-blue-700/50">
-        <div class="overflow-y-auto overflow-x-hidden hide-scrollbar">
-            <div class="p-8 text-2xl font-bold flex items-center gap-3 text-white">
+        class="w-64 min-w-[16rem] bg-gradient-to-b from-blue-700 via-blue-800 to-blue-900 flex flex-col justify-between z-10 shadow-[4px_0_24px_rgba(0,0,0,0.08)] sidebar-transition flex-shrink-0 border-r border-white/5 relative overflow-hidden">
+
+        <!-- Ornamen Dekorasi Halus di Latar Belakang Sidebar -->
+        <div
+            class="absolute top-0 left-0 w-full h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none">
+        </div>
+
+        <div class="overflow-y-auto overflow-x-hidden hide-scrollbar relative z-10 mt-2">
+            <div class="p-8 text-2xl font-black flex items-center gap-3 text-white tracking-wide">
                 <img src="{{ asset('logo_kiri.png') }}" alt="Logo GenBI"
-                    class="w-10 h-10 bg-white rounded-full p-1 shadow-sm object-contain flex-shrink-0">
-                <span class="whitespace-nowrap">GenBI</span>
+                    class="w-11 h-11 bg-white/95 rounded-full p-1.5 shadow-md object-contain flex-shrink-0 border border-white/20">
+                <span class="whitespace-nowrap drop-shadow-md">GenBI</span>
             </div>
 
-            <p class="px-8 text-xs text-blue-200 mb-4 uppercase tracking-wider font-semibold">Menu Utama</p>
-            <nav class="space-y-2 flex flex-col px-4 pb-4">
+            <div class="px-8 mb-4">
+                <p class="text-[10px] text-blue-200/60 uppercase tracking-[0.25em] font-black">Menu Utama</p>
+            </div>
+
+            <nav class="space-y-1.5 flex flex-col px-4 pb-4">
                 @php
                     $activeMenu =
-                        'flex items-center px-4 py-3 bg-white text-primary-blue rounded-xl shadow-md font-bold transition whitespace-nowrap';
+                        'flex items-center px-4 py-3.5 bg-white text-blue-700 rounded-2xl shadow-lg shadow-black/10 font-extrabold transition-all duration-300 transform scale-[1.02] whitespace-nowrap border border-white/20';
                     $inactiveMenu =
-                        'flex items-center px-4 py-3 text-blue-100 hover:bg-white/10 hover:text-white rounded-xl transition font-medium whitespace-nowrap';
+                        'flex items-center px-4 py-3.5 text-blue-100/70 hover:bg-white/10 hover:text-white rounded-2xl transition-all duration-300 hover:translate-x-1.5 font-semibold whitespace-nowrap border border-transparent hover:border-white/5';
                 @endphp
 
                 <a href="{{ route('dashboard') }}"
                     class="{{ request()->routeIs('dashboard') ? $activeMenu : $inactiveMenu }}">
-                    <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
                         </path>
@@ -94,8 +104,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'sekretaris']))
                     <a href="{{ route('users.index') }}"
                         class="{{ request()->routeIs('users.*') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
                             </path>
@@ -107,8 +117,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'bendahara']))
                     <a href="{{ route('kegiatan') }}"
                         class="{{ request()->routeIs('kegiatan') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                             </path>
@@ -120,8 +130,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'sekretaris']))
                     <a href="{{ route('absensi') }}"
                         class="{{ request()->routeIs('absensi') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
@@ -132,8 +142,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'anggota']))
                     <a href="{{ route('poin') }}"
                         class="{{ request()->routeIs('poin') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>
@@ -144,8 +154,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'bendahara']))
                     <a href="{{ route('anggaran') }}"
                         class="{{ request()->routeIs('anggaran') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                             </path>
@@ -157,8 +167,8 @@
                 @if (in_array(auth()->user()->role, ['admin', 'sekretaris', 'bendahara']))
                     <a href="{{ route('laporan') }}"
                         class="{{ request()->routeIs('laporan') ? $activeMenu : $inactiveMenu }}">
-                        <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
                             </path>
@@ -169,9 +179,10 @@
             </nav>
         </div>
 
-        <div class="p-4 mb-4 mt-auto border-t border-blue-700/50">
+        <div class="p-4 mb-4 mt-auto relative z-10">
+            <div class="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4"></div>
             <a href="{{ route('logout') }}"
-                class="flex items-center px-4 py-3 text-red-200 hover:bg-red-500 hover:text-white rounded-xl transition font-medium whitespace-nowrap">
+                class="flex items-center px-4 py-3 text-red-200 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/30 rounded-2xl transition-all duration-300 font-bold whitespace-nowrap hover:translate-x-1">
                 <svg class="w-5 h-5 mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
@@ -184,7 +195,7 @@
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-bg-main relative sidebar-transition">
         <header
-            class="bg-bg-main px-6 md:px-10 py-3 flex items-center justify-between border-b border-gray-100 sticky top-0 z-40 h-[72px]">
+            class="bg-white/70 backdrop-blur-md px-6 md:px-10 py-3 flex items-center justify-between border-b border-white/50 shadow-sm sticky top-0 z-40 h-[72px] transition-all duration-300">
 
             <div class="flex items-center">
                 <button id="sidebarToggleBtn"

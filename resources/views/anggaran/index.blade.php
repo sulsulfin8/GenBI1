@@ -14,19 +14,11 @@
                     <select name="devisi" onchange="this.form.submit()"
                         class="border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue bg-white font-medium text-gray-700 min-w-[150px] cursor-pointer">
                         <option value="">-- Semua Devisi --</option>
-                        <option value="Pendidikan & Kebudayaan"
-                            {{ request('devisi') == 'Pendidikan & Kebudayaan' ? 'selected' : '' }}>Pendidikan & Kebudayaan
-                        </option>
-                        <option value="Pengabdian Masyarakat"
-                            {{ request('devisi') == 'Pengabdian Masyarakat' ? 'selected' : '' }}>Pengabdian Masyarakat
-                        </option>
-                        <option value="Publikasi Dekorasi & Dokumentasi"
-                            {{ request('devisi') == 'Publikasi Dekorasi & Dokumentasi' ? 'selected' : '' }}>Publikasi
-                            Dekorasi & Dokumentasi</option>
-                        <option value="Kewirausahaan" {{ request('devisi') == 'Kewirausahaan' ? 'selected' : '' }}>
-                            Kewirausahaan</option>
-                        <option value="Lingkungan Hidup" {{ request('devisi') == 'Lingkungan Hidup' ? 'selected' : '' }}>
-                            Lingkungan Hidup</option>
+                        @foreach ($devisis as $dev)
+                            <option value="{{ $dev->nama_devisi }}"
+                                {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="flex items-center gap-2 relative">

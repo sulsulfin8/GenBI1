@@ -62,6 +62,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/dashboard/update-poin', [App\Http\Controllers\DashboardController::class, 'updatePoin'])->name('dashboard.update_poin');
     Route::post('/dashboard/upload-dokumentasi', [App\Http\Controllers\DashboardController::class, 'uploadDokumentasi'])->name('dashboard.upload_dokumentasi');
     Route::post('/dashboard/hapus-dokumentasi', [App\Http\Controllers\DashboardController::class, 'hapusDokumentasi'])->name('dashboard.hapus_dokumentasi');
+    Route::post('/dashboard/devisi', [\App\Http\Controllers\DashboardController::class, 'storeDevisi'])->name('dashboard.store_devisi');
+    Route::put('/dashboard/devisi/{id}', [\App\Http\Controllers\DashboardController::class, 'updateDevisi'])->name('dashboard.update_devisi');
+    Route::delete('/dashboard/devisi/{id}', [\App\Http\Controllers\DashboardController::class, 'destroyDevisi'])->name('dashboard.destroy_devisi');
 
     // --- POIN KEAKTIFAN ---
     // Semua bisa melihat poin

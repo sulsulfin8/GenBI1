@@ -11,7 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\URL; // <-- Tambahan untuk URL terenkripsi
+use Illuminate\Support\Facades\URL;
 
 class LaporanController extends Controller
 {
@@ -90,6 +90,26 @@ class LaporanController extends Controller
         return base64_encode(QrCode::size(200)->generate($url));
     }
 
+    private function getAdminData()
+    {
+        $admin = \App\Models\User::where('role', 'admin')->first();
+        $ttdAdmin = null;
+        $namaAdmin = '........................................';
+
+        if ($admin) {
+            $namaAdmin = $admin->name;
+            if ($admin->ttd) {
+                $path = storage_path('app/public/' . $admin->ttd);
+                if (file_exists($path)) {
+                    $type = pathinfo($path, PATHINFO_EXTENSION);
+                    $data = file_get_contents($path);
+                    $ttdAdmin = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+            }
+        }
+        return (object)['nama' => $namaAdmin, 'ttd' => $ttdAdmin];
+    }
+
     public function cetakWord(Request $request, $devisi)
     {
         $namaDevisi = urldecode($devisi);
@@ -97,8 +117,8 @@ class LaporanController extends Controller
         if ($kegiatans->isEmpty()) return back()->with('error', 'Data tidak ditemukan.');
 
         list($logoL, $logoR) = $this->getLogos();
+        $adminData = $this->getAdminData();
 
-        // PERBAIKAN: Generate URL Terenkripsi untuk QR Code
         $urlVerifikasi = URL::signedRoute('verifikasi.dokumen', [
             'jenis' => 'anggaran',
             'devisi' => $namaDevisi
@@ -113,12 +133,15 @@ class LaporanController extends Controller
             'kontak' => 'No. Hp: 082228576830 Email: genbisultra@gmail.com',
         ];
 
+        // SAKELAR OTOMATIS: Cek apakah ini diakses dari link QR Code
+        $isVerifikasi = $request->routeIs('verifikasi.dokumen');
+
         if ($request->has('download')) {
             $headers = ["Content-type" => "application/vnd.ms-word", "Content-Disposition" => "attachment;Filename=Laporan_RAB.doc"];
-            return response()->view('laporan.word', compact('kegiatans', 'namaDevisi', 'kop', 'logoL', 'logoR', 'qrCodeBase64'))->withHeaders($headers);
+            return response()->view('laporan.word', compact('kegiatans', 'namaDevisi', 'kop', 'logoL', 'logoR', 'qrCodeBase64', 'adminData', 'isVerifikasi'))->withHeaders($headers);
         }
 
-        $pdf = Pdf::loadView('laporan.word', compact('kegiatans', 'namaDevisi', 'kop', 'logoL', 'logoR', 'qrCodeBase64'));
+        $pdf = Pdf::loadView('laporan.word', compact('kegiatans', 'namaDevisi', 'kop', 'logoL', 'logoR', 'qrCodeBase64', 'adminData', 'isVerifikasi'));
         return $pdf->setPaper('A4', 'portrait')->stream();
     }
 
@@ -128,8 +151,8 @@ class LaporanController extends Controller
         $kegiatan->absensis = Absensi::where('kegiatan', $kegiatan->nama_kegiatan)->get()->unique('nim');
 
         list($logoL, $logoR) = $this->getLogos();
+        $adminData = $this->getAdminData();
 
-        // PERBAIKAN: Generate URL Terenkripsi untuk QR Code
         $urlVerifikasi = URL::signedRoute('verifikasi.dokumen', [
             'jenis' => 'absensi',
             'id' => $kegiatan->id
@@ -144,12 +167,15 @@ class LaporanController extends Controller
             'kontak' => 'No. Hp: 082228576830 Email: genbisultra@gmail.com',
         ];
 
+        // SAKELAR OTOMATIS
+        $isVerifikasi = $request->routeIs('verifikasi.dokumen');
+
         if ($request->has('download')) {
             $headers = ["Content-type" => "application/vnd.ms-word", "Content-Disposition" => "attachment;Filename=Laporan_Absensi.doc"];
-            return response()->view('laporan.word_absensi', compact('kegiatan', 'kop', 'logoL', 'logoR', 'qrCodeBase64'))->withHeaders($headers);
+            return response()->view('laporan.word_absensi', compact('kegiatan', 'kop', 'logoL', 'logoR', 'qrCodeBase64', 'adminData', 'isVerifikasi'))->withHeaders($headers);
         }
 
-        $pdf = Pdf::loadView('laporan.word_absensi', compact('kegiatan', 'kop', 'logoL', 'logoR', 'qrCodeBase64'));
+        $pdf = Pdf::loadView('laporan.word_absensi', compact('kegiatan', 'kop', 'logoL', 'logoR', 'qrCodeBase64', 'adminData', 'isVerifikasi'));
         return $pdf->setPaper('A4', 'portrait')->stream();
     }
 
@@ -192,8 +218,8 @@ class LaporanController extends Controller
         }
 
         list($logoL, $logoR) = $this->getLogos();
+        $adminData = $this->getAdminData();
 
-        // PERBAIKAN: Generate URL Terenkripsi untuk QR Code
         $urlVerifikasi = URL::signedRoute('verifikasi.dokumen', [
             'jenis' => 'poin',
             'bulan' => $request->bulan,
@@ -209,21 +235,19 @@ class LaporanController extends Controller
             'kontak' => 'No. Hp: 082228576830 Email: genbisultra@gmail.com',
         ];
 
-        $pdf = Pdf::loadView('laporan.pdf_poin', compact('rekapData', 'kop', 'logoL', 'logoR', 'qrCodeBase64'));
+        // SAKELAR OTOMATIS
+        $isVerifikasi = $request->routeIs('verifikasi.dokumen');
+
+        $pdf = Pdf::loadView('laporan.pdf_poin', compact('rekapData', 'kop', 'logoL', 'logoR', 'qrCodeBase64', 'adminData', 'isVerifikasi'));
         return $pdf->setPaper('letter', 'portrait')->stream();
     }
 
-    // =========================================================================
-    // FUNGSI BARU: Untuk membaca QR Code dan menampilkan dokumen asli di HP
-    // =========================================================================
     public function verifikasiDokumen(Request $request)
     {
-        // 1. Cek apakah tanda tangan enkripsi valid (Mencegah pemalsuan QR)
         if (! $request->hasValidSignature()) {
             abort(403, 'Peringatan: QR Code Tidak Valid atau Telah Dipalsukan!');
         }
 
-        // 2. Jika valid, render langsung dokumen aslinya ke browser HP penguji
         $jenis = $request->jenis;
         if ($jenis == 'anggaran') {
             return $this->cetakWord($request, $request->devisi);

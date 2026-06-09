@@ -52,18 +52,11 @@
                         <option value="">-- Semua Devisi --</option>
                         <option value="Semua Devisi" {{ request('devisi') == 'Semua Devisi' ? 'selected' : '' }}>Semua
                             Devisi (Kegiatan Bersama)</option>
-                        <option value="Pendidikan & Kebudayaan"
-                            {{ request('devisi') == 'Pendidikan & Kebudayaan' ? 'selected' : '' }}>Pendidikan & Kebudayaan
-                        </option>
-                        <option value="Pengabdian Masyarakat"
-                            {{ request('devisi') == 'Pengabdian Masyarakat' ? 'selected' : '' }}>Pengabdian Masyarakat
-                        </option>
-                        <option value="Publikasi Dekorasi & Dokumentasi"
-                            {{ request('devisi') == 'Publikasi Dekorasi & Dokumentasi' ? 'selected' : '' }}>Pubdok</option>
-                        <option value="Kewirausahaan" {{ request('devisi') == 'Kewirausahaan' ? 'selected' : '' }}>
-                            Kewirausahaan</option>
-                        <option value="Lingkungan Hidup" {{ request('devisi') == 'Lingkungan Hidup' ? 'selected' : '' }}>
-                            Lingkungan Hidup</option>
+                        @foreach ($devisis as $dev)
+                            <option value="{{ $dev->nama_devisi }}"
+                                {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
+                            </option>
+                        @endforeach
                     </select>
 
                     <div class="relative w-full md:w-64">
@@ -124,19 +117,14 @@
                             <td class="py-4 px-5">
                                 @php
                                     $devColor = 'bg-gray-100 text-gray-600';
-                                    if (str_contains(strtolower($kegiatan->devisi), 'pendidikan')) {
-                                        $devColor = 'bg-blue-100 text-blue-700';
-                                    } elseif (str_contains(strtolower($kegiatan->devisi), 'masyarakat')) {
-                                        $devColor = 'bg-emerald-100 text-emerald-700';
-                                    } elseif (str_contains(strtolower($kegiatan->devisi), 'publikasi')) {
-                                        $devColor = 'bg-purple-100 text-purple-700';
-                                    } elseif (str_contains(strtolower($kegiatan->devisi), 'wirausaha')) {
-                                        $devColor = 'bg-amber-100 text-amber-700';
-                                    } elseif (str_contains(strtolower($kegiatan->devisi), 'lingkungan')) {
-                                        $devColor = 'bg-rose-100 text-rose-700';
-                                    } elseif (str_contains(strtolower($kegiatan->devisi), 'semua devisi')) {
-                                        // Warna spesial untuk Semua Devisi
+                                    if (strtolower($kegiatan->devisi) == 'semua devisi') {
                                         $devColor = 'bg-gray-800 text-white';
+                                    } else {
+                                        $matchedDev = $devisis->firstWhere('nama_devisi', $kegiatan->devisi);
+                                        if ($matchedDev) {
+                                            $color = $matchedDev->warna; // Mengambil warna dari database
+                                            $devColor = "bg-{$color}-100 text-{$color}-700 border border-{$color}-200";
+                                        }
                                     }
                                 @endphp
                                 <span
@@ -273,15 +261,15 @@
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Devisi
                         Pelaksana</label>
                     <select name="devisi" required
-                        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
-                        <option value="">-- Pilih Devisi --</option>
-                        <option value="Semua Devisi" class="font-bold text-blue-600">Semua Devisi (Kegiatan Bersama)
-                        </option>
-                        <option value="Pendidikan & Kebudayaan">Pendidikan & Kebudayaan</option>
-                        <option value="Pengabdian Masyarakat">Pengabdian Masyarakat</option>
-                        <option value="Publikasi Dekorasi & Dokumentasi">Pubdok</option>
-                        <option value="Kewirausahaan">Kewirausahaan</option>
-                        <option value="Lingkungan Hidup">Lingkungan Hidup</option>
+                        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
+                        <option value="Semua Devisi" class="font-bold text-blue-600"
+                            {{ isset($kegiatan) && $kegiatan->devisi == 'Semua Devisi' ? 'selected' : '' }}>Semua Devisi
+                            (Kegiatan Bersama)</option>
+                        @foreach ($devisis as $dev)
+                            <option value="{{ $dev->nama_devisi }}"
+                                {{ isset($kegiatan) && $kegiatan->devisi == $dev->nama_devisi ? 'selected' : '' }}>
+                                {{ $dev->nama_devisi }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -354,21 +342,13 @@
                         <select name="devisi" required
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
                             <option value="Semua Devisi" class="font-bold text-blue-600"
-                                {{ $kegiatan->devisi == 'Semua Devisi' ? 'selected' : '' }}>Semua Devisi (Kegiatan Bersama)
-                            </option>
-                            <option value="Pendidikan & Kebudayaan"
-                                {{ $kegiatan->devisi == 'Pendidikan & Kebudayaan' ? 'selected' : '' }}>Pendidikan &
-                                Kebudayaan</option>
-                            <option value="Pengabdian Masyarakat"
-                                {{ $kegiatan->devisi == 'Pengabdian Masyarakat' ? 'selected' : '' }}>Pengabdian Masyarakat
-                            </option>
-                            <option value="Publikasi Dekorasi & Dokumentasi"
-                                {{ $kegiatan->devisi == 'Publikasi Dekorasi & Dokumentasi' ? 'selected' : '' }}>Pubdok
-                            </option>
-                            <option value="Kewirausahaan" {{ $kegiatan->devisi == 'Kewirausahaan' ? 'selected' : '' }}>
-                                Kewirausahaan</option>
-                            <option value="Lingkungan Hidup"
-                                {{ $kegiatan->devisi == 'Lingkungan Hidup' ? 'selected' : '' }}>Lingkungan Hidup</option>
+                                {{ isset($kegiatan) && $kegiatan->devisi == 'Semua Devisi' ? 'selected' : '' }}>Semua
+                                Devisi (Kegiatan Bersama)</option>
+                            @foreach ($devisis as $dev)
+                                <option value="{{ $dev->nama_devisi }}"
+                                    {{ isset($kegiatan) && $kegiatan->devisi == $dev->nama_devisi ? 'selected' : '' }}>
+                                    {{ $dev->nama_devisi }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-4">

@@ -20,6 +20,7 @@ class User extends Authenticatable
         'jurusan',
         'devisi',
         'photo',
+        'ttd',
         'jabatan',
         'request_reset',
         'otp',

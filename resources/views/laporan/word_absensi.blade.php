@@ -134,18 +134,27 @@
     <br><br>
     <table style="width: 100%; border: none; border-collapse: collapse;">
         <tr>
-            <td style="width: 30%; text-align: center; vertical-align: bottom; border: none;">
-                <span style="font-size: 10pt; color: black;">Scan untuk lihat keaslian</span><br><br>
-                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="70">
-            </td>
-
-            <td style="width: 30%; border: none;"></td>
-
-            <td style="width: 40%; text-align: center; vertical-align: bottom; border: none;">
+            <td style="width: 50%; border: none;"></td>
+            <td style="width: 50%; text-align: center; vertical-align: bottom; border: none;">
                 <p style="margin: 0;">Kolaka, {{ $tglIndo }}</p>
-                <p style="margin: 0;">Sekretaris Devisi,</p>
-                <br><br><br><br>
-                <p style="margin: 0; font-weight: bold;">( ........................................ )</p>
+                <p style="margin: 0;">Ketua Umum,</p>
+
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    @if ($isVerifikasi)
+                        @if (!empty($adminData->ttd))
+                            <!-- UKURAN TANDA TANGAN DIPERBESAR MENJADI 110 -->
+                            <img src="{{ $adminData->ttd }}" height="110">
+                        @else
+                            <div style="height: 110px;"></div>
+                        @endif
+                    @else
+                        <!-- UKURAN QR CODE JUGA SEDIKIT DIPERBESAR -->
+                        <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="80">
+                    @endif
+                </div>
+
+                <p style="margin: 0; font-weight: bold;">(
+                    {{ $adminData->nama ?? '........................................' }} )</p>
             </td>
         </tr>
     </table>

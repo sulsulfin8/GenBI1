@@ -35,8 +35,9 @@ class KegiatanController extends Controller
 
         // 4. Jalankan query dengan PAGINATION
         $kegiatans = $query->paginate($perPage);
+        $devisis = \App\Models\Devisi::all();
 
-        return view('kegiatan.index', compact('kegiatans'));
+        return view('kegiatan.index', compact('kegiatans', 'devisis'));
     }
 
     // Menyimpan data kegiatan baru

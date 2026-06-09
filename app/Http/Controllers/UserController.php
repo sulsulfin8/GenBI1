@@ -21,8 +21,9 @@ class UserController extends Controller
         }
         $perPage = $request->input('per_page', 10);
         $users = $query->paginate($perPage);
+        $devisis = \App\Models\Devisi::all();
 
-        return view('user.index', compact('users'));
+        return view('user.index', compact('users', 'devisis'));
     }
 
     public function store(Request $request)
@@ -32,13 +33,20 @@ class UserController extends Controller
             'email' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,anggota,sekretaris,bendahara,pembina',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto dikembalikan
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'ttd' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // <-- Tambahan Validasi TTD
         ]);
 
         // Logika Upload Foto
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('photos', 'public');
+        }
+
+        // Logika Upload Tanda Tangan
+        $ttdPath = null;
+        if ($request->hasFile('ttd')) {
+            $ttdPath = $request->file('ttd')->store('ttd', 'public');
         }
 
         User::create([
@@ -49,8 +57,9 @@ class UserController extends Controller
             'role' => $request->role,
             'jurusan' => $request->jurusan,
             'devisi' => $request->devisi,
-            'jabatan' => $request->jabatan, // <-- Simpan Jabatan untuk Struktur Organisasi
-            'photo' => $photoPath, // <-- Simpan Foto
+            'jabatan' => $request->jabatan,
+            'photo' => $photoPath,
+            'ttd' => $ttdPath, // <-- Simpan Nama File TTD ke Database
         ]);
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan');
@@ -62,7 +71,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users,email,' . $id,
             'role' => 'required|in:admin,anggota,sekretaris,bendahara,pembina',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validasi foto dikembalikan
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'ttd' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // <-- Tambahan Validasi TTD
         ]);
 
         $user = User::findOrFail($id);
@@ -74,7 +84,7 @@ class UserController extends Controller
             'role' => $request->role,
             'jurusan' => $request->jurusan,
             'devisi' => $request->devisi,
-            'jabatan' => $request->jabatan, // <-- Update Jabatan untuk Struktur Organisasi
+            'jabatan' => $request->jabatan,
         ];
 
         // Jika password diisi, maka update password
@@ -90,6 +100,16 @@ class UserController extends Controller
             }
             // Upload foto baru
             $dataToUpdate['photo'] = $request->file('photo')->store('photos', 'public');
+        }
+
+        // Logika Update Tanda Tangan
+        if ($request->hasFile('ttd')) {
+            // Hapus ttd lama dari folder storage agar tidak menumpuk
+            if ($user->ttd && Storage::disk('public')->exists($user->ttd)) {
+                Storage::disk('public')->delete($user->ttd);
+            }
+            // Upload ttd baru
+            $dataToUpdate['ttd'] = $request->file('ttd')->store('ttd', 'public');
         }
 
         // ==============================================================
@@ -112,6 +132,11 @@ class UserController extends Controller
         // Hapus foto profil dari penyimpanan saat user dihapus
         if ($user->photo && Storage::disk('public')->exists($user->photo)) {
             Storage::disk('public')->delete($user->photo);
+        }
+
+        // Hapus file tanda tangan dari penyimpanan saat user dihapus
+        if ($user->ttd && Storage::disk('public')->exists($user->ttd)) {
+            Storage::disk('public')->delete($user->ttd);
         }
 
         // Pembersihan Total (Cascade Delete) agar tidak ada data hantu di Absensi & Poin
