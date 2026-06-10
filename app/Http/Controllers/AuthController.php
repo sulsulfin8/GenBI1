@@ -68,16 +68,50 @@ class AuthController extends Controller
             $user->save();
 
             // Proses Pengiriman Email
+            // Proses Pengiriman Email (Desain HTML Elegan)
             try {
-                \Illuminate\Support\Facades\Mail::raw("Halo {$user->name},\n\nKode OTP reset kata sandi Anda adalah: {$otp}\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun.", function ($message) use ($user) {
-                    $message->to($user->email)->subject('Kode OTP Reset Sandi GenBI');
+                $htmlContent = "
+                <div style='font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 30px; border-radius: 12px;'>
+                    <div style='text-align: center; margin-bottom: 25px;'>
+                        <h2 style='color: #1e40af; margin: 0; font-weight: 800; font-size: 24px;'>SIM GenBI</h2>
+                    </div>
+                    
+                    <div style='background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 5px solid #3b82f6;'>
+                        <p style='font-size: 16px; color: #374151; margin-top: 0;'>Halo, <strong>{$user->name}</strong>,</p>
+                        <p style='font-size: 15px; color: #4b5563; line-height: 1.6;'>Kami menerima permintaan untuk mereset kata sandi akun Anda. Gunakan kode keamanan (OTP) di bawah ini untuk melanjutkan proses tersebut:</p>
+                        
+                        <div style='text-align: center; margin: 35px 0;'>
+                            <span style='display: inline-block; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #1d4ed8; background-color: #eff6ff; padding: 15px 35px; border-radius: 12px; border: 2px dashed #93c5fd;'>
+                                {$otp}
+                            </span>
+                        </div>
+                        
+                        <div style='background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 15px; border-radius: 4px; margin-bottom: 20px;'>
+                            <p style='font-size: 14px; color: #b91c1c; margin: 0; font-weight: 600;'>
+                                Perhatian: Kode ini hanya berlaku selama 10 Menit.
+                            </p>
+                        </div>
+                        
+                        <p style='font-size: 14px; color: #6b7280; line-height: 1.5; margin-bottom: 0;'>Demi keamanan akun Anda, <strong>jangan pernah membagikan kode OTP ini</strong> kepada siapa pun, termasuk pihak yang mengatasnamakan pengurus/admin GenBI.</p>
+                    </div>
+                    
+                    <div style='text-align: center; margin-top: 25px;'>
+                        <p style='font-size: 12px; color: #9ca3af; line-height: 1.5; margin: 0;'>
+                            &copy; " . date('Y') . " Sistem Informasi Manajemen GenBI USN Kolaka.
+                        </p>
+                    </div>
+                </div>
+                ";
+
+                \Illuminate\Support\Facades\Mail::html($htmlContent, function ($message) use ($user) {
+                    $message->to($user->email)->subject(' Kode OTP Reset Kata Sandi Anda');
                 });
             } catch (\Exception $e) {
-                return back()->with('error', 'Gagal mengirim email. Pastikan koneksi internet & pengaturan SMTP .env sudah benar!');
+                return back()->with('error', 'Gagal mengirim email. Pastikan email yang anda masukkan sudah benar!');
             }
 
             return back()->with([
-                'success' => 'Kode OTP berhasil dikirim! Silakan cek Kotak Masuk atau folder Spam email Anda.',
+                'success' => 'Kode OTP berhasil dikirim! Silakan cek email Anda.',
                 'step' => 'otp',
                 'email' => $user->email
             ]);
