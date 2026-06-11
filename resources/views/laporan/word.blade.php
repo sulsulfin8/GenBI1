@@ -213,7 +213,7 @@
                         </tr>
                     @endforelse
                     <tr>
-                        <td colspan="5" class="text-right teks-tebal">TOTAL KESELURUHAN</td>
+                        <td colspan="5" class="text-left teks-tebal">TOTAL KESELURUHAN</td>
                         <td class="uang teks-tebal">Rp {{ number_format($totalSeluruh, 0, ',', '.') }}</td>
                     </tr>
                 </tbody>

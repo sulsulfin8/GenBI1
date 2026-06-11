@@ -194,8 +194,8 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden bg-bg-main relative sidebar-transition">
-        <header
-            class="bg-white/70 backdrop-blur-md px-6 md:px-10 py-3 flex items-center justify-between border-b border-white/50 shadow-sm sticky top-0 z-40 h-[72px] transition-all duration-300">
+        <header id="mainHeader"
+            class="bg-white/70 backdrop-blur-md px-6 md:px-10 py-3 flex items-center justify-between border-b border-white/50 shadow-sm sticky top-0 z-40 h-[72px]">
 
             <div class="flex items-center">
                 <button id="sidebarToggleBtn"
@@ -327,32 +327,69 @@
     </main>
 
     <script>
+        // ==========================================
+        // FUNGSI 1: MENGATUR SIDEBAR (Kode Lama-mu)
+        // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('mainSidebar');
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             const iconPath = document.getElementById('toggleIconPath');
 
-            // Cek di local storage biar permanen pas pindah halaman
-            const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (sidebar && toggleBtn && iconPath) {
+                // Cek di local storage biar permanen pas pindah halaman
+                const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
 
-            if (isCollapsed) {
-                sidebar.classList.add('sidebar-collapsed');
-                iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16'); // Ikon garis tiga full
-            }
-
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('sidebar-collapsed');
-                const isNowCollapsed = sidebar.classList.contains('sidebar-collapsed');
-                localStorage.setItem('sidebar_collapsed', isNowCollapsed);
-
-                // Animasi Ikon Hamburger
-                if (isNowCollapsed) {
-                    iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
-                } else {
-                    iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h7');
+                if (isCollapsed) {
+                    sidebar.classList.add('sidebar-collapsed');
+                    iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16'); // Ikon garis tiga full
                 }
-            });
+
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('sidebar-collapsed');
+                    const isNowCollapsed = sidebar.classList.contains('sidebar-collapsed');
+                    localStorage.setItem('sidebar_collapsed', isNowCollapsed);
+
+                    // Animasi Ikon Hamburger
+                    if (isNowCollapsed) {
+                        iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+                    } else {
+                        iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h7');
+                    }
+                });
+            }
         });
+
+        // ==========================================
+        // FUNGSI 2: MENGATUR POPUP & HEADER BURAM (Trik Baru)
+        // ==========================================
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const header = document.getElementById('mainHeader');
+
+            if (modal) {
+                if (modal.classList.contains('hidden')) {
+                    // Saat popup akan DIBUKA
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    document.body.style.overflow = 'hidden'; // Menghentikan scroll layar di belakang
+
+                    // KUNCI: Lempar header ke belakang agar efek buram popup bekerja maksimal
+                    if (header) {
+                        header.style.zIndex = '0';
+                    }
+                } else {
+                    // Saat popup akan DITUTUP
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.body.style.overflow = 'auto'; // Mengembalikan kemampuan scroll
+
+                    // KUNCI: Panggil kembali header ke depan seperti semula
+                    if (header) {
+                        header.style.zIndex = '40'; // Sesuai dengan z-index awal header-mu
+                    }
+                }
+            }
+        }
     </script>
 </body>
 
