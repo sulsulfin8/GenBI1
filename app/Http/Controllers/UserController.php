@@ -31,10 +31,15 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:6',
             'role' => 'required|in:admin,anggota,sekretaris,bendahara,pembina',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'ttd' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // <-- Tambahan Validasi TTD
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+            'ttd' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+        ], [
+            'password.min' => 'Kata sandi minimal harus :min karakter.',
+            'email.unique' => 'Alamat email ini sudah terdaftar sebelumnya.',
+            'photo.max' => 'Ukuran foto maksimal adalah 10MB.',
+            'ttd.max' => 'Ukuran tanda tangan maksimal adalah 10MB.'
         ]);
 
         // Logika Upload Foto
@@ -62,7 +67,12 @@ class UserController extends Controller
             'ttd' => $ttdPath, // <-- Simpan Nama File TTD ke Database
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan');
+        if ($request->ajax() || $request->wantsJson()) {
+            session()->flash('success', 'Pengguna baru berhasil ditambahkan!');
+            return response()->json(['status' => 'success']);
+        }
+
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     public function update(Request $request, $id)

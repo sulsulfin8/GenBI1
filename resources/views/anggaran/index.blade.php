@@ -15,6 +15,7 @@
                         class="border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue bg-white font-medium text-gray-700 min-w-[150px] cursor-pointer">
                         <option value="">-- Semua Devisi --</option>
                         @foreach ($devisis as $dev)
+                            @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
                             <option value="{{ $dev->nama_devisi }}"
                                 {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
                             </option>

@@ -53,6 +53,7 @@
                         <option value="Semua Devisi" {{ request('devisi') == 'Semua Devisi' ? 'selected' : '' }}>Semua
                             Devisi (Kegiatan Bersama)</option>
                         @foreach ($devisis as $dev)
+                            @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
                             <option value="{{ $dev->nama_devisi }}"
                                 {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
                             </option>

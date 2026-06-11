@@ -271,32 +271,52 @@
                 </button>
             </div>
 
-            <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data"
+            <form id="formTambahUser" action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data"
                 class="p-6 space-y-4 overflow-y-auto">
                 @csrf
+
+                <div id="errorContainerTambah"
+                    class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-bold flex flex-col gap-2 shadow-sm animate-fade-in-down">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-red-500 text-white p-1 rounded-full flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <span>Gagal Menyimpan! Perhatikan hal berikut:</span>
+                    </div>
+                    <ul id="errorListTambah" class="list-disc list-inside ml-9 font-medium text-red-500"></ul>
+                </div>
+
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Nama
                         Lengkap</label>
-                    <input type="text" name="name" placeholder="Contoh: Budi Santoso" required
+                    <input type="text" name="name" value="{{ old('name') }}" placeholder="Contoh: Budi Santoso"
+                        required
                         class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">NIM</label>
-                        <input type="text" name="nim" placeholder="Contoh: 22123..."
+                        <input type="text" name="nim" value="{{ old('nim') }}" placeholder="Contoh: 22123..."
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
                     <div>
                         <label
                             class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Jurusan</label>
-                        <input type="text" name="jurusan" placeholder="Contoh: Sistem Informasi"
+                        <input type="text" name="jurusan" value="{{ old('jurusan') }}"
+                            placeholder="Contoh: Sistem Informasi"
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Email /
                         Username</label>
-                    <input type="email" name="email" placeholder="budi@email.com" required
+                    <input type="email" name="email" value="{{ old('email') }}" placeholder="budi@email.com"
+                        required
                         class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800">
                 </div>
                 <div>
@@ -313,6 +333,7 @@
                             class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
                             <option value="">-- Pilih Devisi --</option>
                             @foreach ($devisis as $dev)
+                                @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
                                 <option value="{{ $dev->nama_devisi }}"
                                     {{ isset($user) && $user->devisi == $dev->nama_devisi ? 'selected' : '' }}>
                                     {{ $dev->nama_devisi }}
@@ -349,6 +370,7 @@
                         <option value="" {{ isset($user) && empty($user->jabatan) ? 'selected' : '' }}>-- Anggota
                             Biasa --</option>
                         @foreach ($devisis as $dev)
+                            @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
                             <option value="Ketua Devisi {{ $dev->nama_devisi }}"
                                 {{ isset($user) && $user->jabatan == 'Ketua Devisi ' . $dev->nama_devisi ? 'selected' : '' }}>
                                 Ketua Devisi {{ $dev->nama_devisi }}
@@ -432,9 +454,11 @@
                             <label
                                 class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Devisi</label>
                             <select name="devisi"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-blue focus:border-primary-blue transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
+                                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-gray-50 focus:bg-white font-medium text-gray-800 cursor-pointer">
                                 <option value="">-- Pilih Devisi --</option>
                                 @foreach ($devisis as $dev)
+                                    @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
+
                                     <option value="{{ $dev->nama_devisi }}"
                                         {{ isset($user) && $user->devisi == $dev->nama_devisi ? 'selected' : '' }}>
                                         {{ $dev->nama_devisi }}
@@ -498,6 +522,8 @@
                             <option value="" {{ isset($user) && empty($user->jabatan) ? 'selected' : '' }}>--
                                 Anggota Biasa --</option>
                             @foreach ($devisis as $dev)
+                                @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
+
                                 <option value="Ketua Devisi {{ $dev->nama_devisi }}"
                                     {{ isset($user) && $user->jabatan == 'Ketua Devisi ' . $dev->nama_devisi ? 'selected' : '' }}>
                                     Ketua Devisi {{ $dev->nama_devisi }}
@@ -624,5 +650,73 @@
                 containerTtd.classList.add('hidden');
             }
         }
+        // ========================================================
+        // SCRIPT BARU: AJAX UNTUK TAMBAH PENGGUNA (TANPA KEDIP)
+        // ========================================================
+        document.getElementById('formTambahUser').addEventListener('submit', function(e) {
+            e.preventDefault(); // Mencegah kedipan / refresh halaman
+
+            let form = this;
+            let btn = form.querySelector('button[type="submit"]');
+            let originalText = btn.innerHTML;
+
+            btn.innerHTML = 'Menyimpan...';
+            btn.disabled = true;
+
+            let errorContainer = document.getElementById('errorContainerTambah');
+            let errorList = document.getElementById('errorListTambah');
+
+            // Sembunyikan error lama sebelum mencoba menyimpan lagi
+            errorContainer.classList.add('hidden');
+            errorList.innerHTML = '';
+
+            fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json' // Penting agar Laravel tahu ini request belakang layar
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 422) { // Kode 422 adalah kode error validasi Laravel
+                            return response.json().then(data => {
+                                throw data;
+                            });
+                        }
+                        throw new Error('Terjadi kesalahan server.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Jika sukses, baru reload halaman untuk menampilkan notifikasi sukses hijau
+                    window.location.reload();
+                })
+                .catch(error => {
+                    // Kembalikan tombol seperti semula
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+
+                    if (error.errors) {
+                        // Jika ada error validasi, tampilkan di dalam kotak merah popup
+                        errorContainer.classList.remove('hidden');
+                        for (let field in error.errors) {
+                            error.errors[field].forEach(msg => {
+                                let li = document.createElement('li');
+                                li.textContent = msg;
+                                errorList.appendChild(li);
+                            });
+                        }
+                        // Otomatis scroll ke atas popup agar error terlihat jelas
+                        form.parentElement.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        alert('Kesalahan koneksi saat menyimpan!');
+                    }
+                });
+        });
     </script>
 @endsection

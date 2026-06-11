@@ -68,7 +68,6 @@ class AuthController extends Controller
             $user->save();
 
             // Proses Pengiriman Email
-            // Proses Pengiriman Email (Desain HTML Elegan)
             try {
                 $htmlContent = "
                 <div style='font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 30px; border-radius: 12px;'>
