@@ -371,21 +371,30 @@
                     // Saat popup akan DIBUKA
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
-                    document.body.style.overflow = 'hidden'; // Menghentikan scroll layar di belakang
+                    document.body.style.overflow = 'hidden';
 
-                    // KUNCI: Lempar header ke belakang agar efek buram popup bekerja maksimal
                     if (header) {
-                        header.style.zIndex = '0';
+                        header.style.zIndex = '0'; // Lempar header ke belakang
+                    }
+
+                    if (modalID === 'modalEditBeasiswa' && typeof initDynamicList === 'function') {
+                        initDynamicList('kriteria');
+                        initDynamicList('dokumen');
                     }
                 } else {
                     // Saat popup akan DITUTUP
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
-                    document.body.style.overflow = 'auto'; // Mengembalikan kemampuan scroll
 
-                    // KUNCI: Panggil kembali header ke depan seperti semula
-                    if (header) {
-                        header.style.zIndex = '40'; // Sesuai dengan z-index awal header-mu
+                    // KUNCI PERBAIKAN: Hitung apakah MASIH ADA popup lain yang terbuka di latar belakang
+                    const openModals = document.querySelectorAll('.fixed.inset-0:not(.hidden)');
+
+                    // JIKA SEMUA POPUP SUDAH TERTUTUP (Nol), BARU KEMBALIKAN HEADER KE DEPAN
+                    if (openModals.length === 0) {
+                        document.body.style.overflow = 'auto';
+                        if (header) {
+                            header.style.zIndex = '40'; // Tarik header kembali ke depan
+                        }
                     }
                 }
             }
