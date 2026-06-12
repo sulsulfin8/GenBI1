@@ -3,7 +3,6 @@
 @section('content')
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Manajemen Rancangan Anggaran</h1>
-        <p class="text-gray-500 text-sm">Sesuaikan rincian program kerja dengan format resmi GenBI.</p>
     </div>
 
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

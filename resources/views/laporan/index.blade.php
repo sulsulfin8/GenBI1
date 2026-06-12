@@ -21,7 +21,7 @@
                 </h1>
             </div>
             <p class="text-gray-400 text-sm mt-1.5 font-medium pl-11">Unduh, kelola, dan cetak arsip administrasi digital
-                dalam format PDF dan Word secara instan.</p>
+                dalam format PDF dan Word.</p>
         </div>
     </div>
 
@@ -39,10 +39,13 @@
                             class="w-full border-2 border-gray-200/80 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 bg-white font-extrabold text-gray-700 cursor-pointer appearance-none transition-all shadow-sm">
                             <option value="Rancang Anggaran" {{ $jenis == 'Rancang Anggaran' ? 'selected' : '' }}> Rancang
                                 Anggaran</option>
-                            <option value="Absensi" {{ $jenis == 'Absensi' ? 'selected' : '' }}> Absensi Kehadiran
-                            </option>
-                            <option value="Poin Keaktifan" {{ $jenis == 'Poin Keaktifan' ? 'selected' : '' }}> Poin
-                                Keaktifan</option>
+
+                            @if (auth()->user()->role != 'bendahara')
+                                <option value="Absensi" {{ $jenis == 'Absensi' ? 'selected' : '' }}> Absensi Kehadiran
+                                </option>
+                                <option value="Poin Keaktifan" {{ $jenis == 'Poin Keaktifan' ? 'selected' : '' }}> Poin
+                                    Keaktifan</option>
+                            @endif
                         </select>
                         <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

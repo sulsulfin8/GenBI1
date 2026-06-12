@@ -18,6 +18,10 @@ class LaporanController extends Controller
     public function index(Request $request)
     {
         $jenis = $request->jenis ?? 'Rancang Anggaran';
+
+        if (Auth::check() && Auth::user()->role == 'bendahara') {
+            $jenis = 'Rancang Anggaran';
+        }
         $search = $request->search;
         $bulan = $request->bulan;
         $tahun = $request->tahun;

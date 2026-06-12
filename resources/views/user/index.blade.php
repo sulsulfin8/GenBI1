@@ -3,7 +3,6 @@
 @section('content')
     <div class="mb-8 animate-fade-in-down">
         <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">Kelola Pengguna</h1>
-        <p class="text-gray-500 text-sm mt-1">Manajemen akun dan hak akses pengguna SIM GenBI.</p>
     </div>
 
     @php
