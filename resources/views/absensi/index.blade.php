@@ -18,19 +18,21 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div
+            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-sm font-bold flex items-center gap-3 shadow-sm animate-fade-in-down">
+            <div class="bg-red-500 text-white p-1 rounded-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            {{ session('error') }}
+        </div>
+    @endif
     @if ($errors->any())
         <div
-            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-sm font-bold flex flex-col gap-2 shadow-sm animate-fade-in-down">
-            <div class="flex items-center gap-3">
-                <div class="bg-red-500 text-white p-1 rounded-full">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </div>
-                Penyimpanan Gagal! Perhatikan hal berikut:
-            </div>
-            <ul class="list-disc list-inside ml-8 font-medium">
+            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-sm font-bold shadow-sm animate-fade-in-down">
+            <ul class="list-disc list-inside">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -79,7 +81,8 @@
                         <span id="dropdownSelectedText" class="truncate">-- 1. Pilih Kegiatan --</span>
                         <svg class="h-5 w-5 text-gray-400 flex-shrink-0 transition-transform duration-200" id="dropdownIcon"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
                         </svg>
                     </button>
 
@@ -127,7 +130,7 @@
             </div>
         </form>
 
-        <form action="{{ route('absensi.store') }}" method="POST">
+        <form action="{{ route('absensi.store') }}" method="POST" onsubmit="return validasiPilihKegiatan()">
             @csrf
             <div class="overflow-x-auto rounded-2xl border border-gray-100">
                 <table class="w-full text-left border-collapse min-w-max">
@@ -136,11 +139,14 @@
                             <th
                                 class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest text-center w-12">
                                 No</th>
-                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Mahasiswa
+                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">
+                                Mahasiswa
                             </th>
-                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Devisi &
+                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Devisi
+                                &
                                 Jurusan</th>
-                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">Kegiatan
+                            <th class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest">
+                                Kegiatan
                             </th>
                             <th
                                 class="py-4 px-5 font-black text-[11px] text-gray-500 uppercase tracking-widest text-center">
@@ -273,10 +279,12 @@
                                                 </path>
                                             </svg>
                                         </div>
-                                        <p class="text-sm font-bold text-gray-600">Tidak ada data anggota ditemukan.</p>
+                                        <p class="text-sm font-bold text-gray-600">Tidak ada data anggota ditemukan.
+                                        </p>
                                         @if (request('search'))
                                             <a href="{{ url()->current() }}"
-                                                class="text-xs text-primary-blue hover:underline mt-2">Hapus pencarian</a>
+                                                class="text-xs text-primary-blue hover:underline mt-2">Hapus
+                                                pencarian</a>
                                         @endif
                                     </div>
                                 </td>
@@ -290,7 +298,8 @@
                 <button type="submit"
                     class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-primary-blue hover:from-blue-700 hover:to-blue-600 text-white px-10 py-3.5 rounded-2xl font-black text-sm transition-all duration-300 shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 hover:-translate-y-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                        </path>
                     </svg>
                     Simpan Absensi
                 </button>
@@ -471,6 +480,17 @@
                         `<svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="teks-kegiatan italic text-xs">Menunggu kegiatan...</span>`;
                 }
             });
+        }
+
+        function validasiPilihKegiatan() {
+            const selectKegiatan = document.getElementById('master_kegiatan');
+            if (!selectKegiatan || selectKegiatan.value === "") {
+                alert(
+                    "Peringatan: Anda belum memilih kegiatan! Silakan pilih kegiatan di menu dropdown atas terlebih dahulu."
+                );
+                return false;
+            }
+            return true;
         }
     </script>
 @endsection

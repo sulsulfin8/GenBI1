@@ -1548,234 +1548,241 @@
                 </div>
             @endif
 
-            <style>
-                @keyframes fadeInDown {
-                    0% {
-                        opacity: 0;
-                        transform: translateY(-15px);
+            <!-- ================= FOOTER DASHBOARD ================= -->
+            <div
+                class="mt-12 pt-6 border-t border-gray-200/60 pb-2 relative z-10 flex flex-col md:flex-row justify-between items-center gap-4 animate-fade-in-down">
+                <p class="text-xs md:text-sm font-medium text-gray-500">
+                    &copy; {{ date('Y') }} Sistem Informasi GenBI Komisariat USN Kolaka.
+                </p>
+
+                <style>
+                    @keyframes fadeInDown {
+                        0% {
+                            opacity: 0;
+                            transform: translateY(-15px);
+                        }
+
+                        100% {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
                     }
 
-                    100% {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .animate-fade-in-down {
-                    animation: fadeInDown 0.4s ease-out forwards;
-                }
-
-                @keyframes modalPop {
-                    0% {
-                        opacity: 0;
-                        transform: scale(0.95) translateY(10px);
+                    .animate-fade-in-down {
+                        animation: fadeInDown 0.4s ease-out forwards;
                     }
 
-                    100% {
-                        opacity: 1;
-                        transform: scale(1) translateY(0);
-                    }
-                }
+                    @keyframes modalPop {
+                        0% {
+                            opacity: 0;
+                            transform: scale(0.95) translateY(10px);
+                        }
 
-                .animate-modal {
-                    animation: modalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-
-                .hide-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-
-                .hide-scrollbar {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-            </style>
-
-            <script>
-                function bukaEditDevisi(id, nama, deskripsi, warna) {
-                    document.getElementById('edit_nama_devisi').value = nama;
-                    document.getElementById('edit_deskripsi').value = deskripsi;
-                    document.getElementById('edit_warna').value = warna;
-                    document.getElementById('formEditDevisiAction').action = "{{ url('/dashboard/devisi') }}/" + id;
-                    toggleModal('modalEditDevisi');
-                }
-
-                // LOGIKA CAROUSEL GALERI DOKUMENTASI GLOBAL
-                let carouselInterval;
-
-                function initCarouselSlider() {
-                    if (carouselInterval) clearInterval(carouselInterval);
-                    let currentSlide = 0;
-                    const slides = document.querySelectorAll('#carouselGaleriDisplay .carousel-item');
-                    if (slides.length > 0) {
-                        slides.forEach((slide, idx) => {
-                            if (idx === 0) {
-                                slide.classList.remove('opacity-0');
-                                slide.classList.add('opacity-100');
-                            } else {
-                                slide.classList.remove('opacity-100');
-                                slide.classList.add('opacity-0');
-                            }
-                        });
-                        carouselInterval = setInterval(() => {
-                            if (slides.length <= 1) return;
-                            slides[currentSlide].classList.remove('opacity-100');
-                            slides[currentSlide].classList.add('opacity-0');
-                            currentSlide = (currentSlide + 1) % slides.length;
-                            slides[currentSlide].classList.remove('opacity-0');
-                            slides[currentSlide].classList.add('opacity-100');
-                        }, 3500);
-                    }
-                }
-
-                document.addEventListener("DOMContentLoaded", function() {
-                    initCarouselSlider();
-                    const popup = document.getElementById('popupAgenda');
-                    if (popup) {
-                        document.body.style.overflow = 'hidden';
-                    }
-                });
-
-                // 1 EVENT LISTENER SUBMIT UNTUK SEMUA FORM (MENGGUNAKAN AJAX/LATAR BELAKANG)
-                document.addEventListener('submit', function(e) {
-                    if (e.target && e.target.id === 'formEditGenbi') {
-                        e.preventDefault();
-                        prosesSimpanInstan(e.target, 'modalEditGenbi', 'modalInfoGenbi');
-                    } else if (e.target && e.target.id === 'formEditPoin') {
-                        e.preventDefault();
-                        prosesSimpanInstan(e.target, 'modalEditPoin', 'modalInfoPoin');
-                    } else if (e.target && e.target.id === 'formEditBeasiswa') {
-                        e.preventDefault();
-                        prosesSimpanInstan(e.target, 'modalEditBeasiswa', 'modalInfoBeasiswa');
-                    } else if (e.target && e.target.id === 'formHapusMasal') {
-                        e.preventDefault();
-                        prosesHapusMasalInstan(e.target);
-                    }
-                });
-
-                // FUNGSI UTAMA: PROSES HAPUS MASSAL TANPA REFRESH
-                function prosesHapusMasalInstan(form) {
-                    let btn = document.getElementById('btnHapusMasal');
-                    let originalText = btn.innerHTML;
-                    let count = document.querySelectorAll('input[name="filenames[]"]:checked').length;
-
-                    if (!confirm('Apakah Anda yakin ingin menghapus ' + count + ' foto tersebut secara permanen?')) return;
-
-                    btn.innerText = "Menghapus...";
-                    btn.disabled = true;
-
-                    let token = document.querySelector('input[name="_token"]');
-
-                    fetch(form.action, {
-                            method: 'POST',
-                            body: new FormData(form),
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': token ? token.value : ''
-                            }
-                        })
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network error');
-                            return response.text();
-                        })
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-
-                            document.getElementById('carouselGaleriDisplay').innerHTML = doc.getElementById(
-                                'carouselGaleriDisplay').innerHTML;
-                            document.getElementById('gridFotoKelola').innerHTML = doc.getElementById('gridFotoKelola')
-                                .innerHTML;
-
-                            document.getElementById('terpilihCount').innerText = "0";
-                            btn.innerHTML = originalText;
-                            btn.disabled = true;
-
-                            tampilkanToastHapus(count);
-                            initCarouselSlider();
-                        })
-                        .catch(error => {
-                            alert("Kesalahan koneksi saat menghapus foto!");
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                        });
-                }
-
-                // FUNGSI SIMPAN INFO & ATURAN POIN INSTAN (MENCEGAH REFRESH HALAMAN)
-                function prosesSimpanInstan(form, idModalEdit, idModalInfo) {
-                    let btn = form.querySelector('button[type="submit"]');
-                    let originalText = btn.innerText;
-                    btn.innerText = "Menyimpan...";
-                    btn.disabled = true;
-
-                    // Pastikan Dynamic List disinkronkan ke Textarea sebelum di-submit
-                    if (form.id === 'formEditBeasiswa' && typeof syncDynamicList === 'function') {
-                        syncDynamicList('kriteria');
-                        syncDynamicList('dokumen');
+                        100% {
+                            opacity: 1;
+                            transform: scale(1) translateY(0);
+                        }
                     }
 
-                    let token = document.querySelector('input[name="_token"]');
+                    .animate-modal {
+                        animation: modalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    }
 
-                    fetch(form.action, {
-                            method: 'POST',
-                            body: new FormData(form),
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': token ? token.value : ''
-                            }
-                        })
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network error');
-                            return response.text();
-                        })
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
+                    .hide-scrollbar::-webkit-scrollbar {
+                        display: none;
+                    }
 
-                            const editModal = document.getElementById(idModalEdit);
-                            const infoModal = document.getElementById(idModalInfo);
+                    .hide-scrollbar {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                </style>
 
-                            // Tutup modal edit, buka modal info
-                            editModal.classList.add('hidden');
-                            editModal.classList.remove('flex');
-                            infoModal.classList.remove('hidden');
-                            infoModal.classList.add('flex');
+                <script>
+                    function bukaEditDevisi(id, nama, deskripsi, warna) {
+                        document.getElementById('edit_nama_devisi').value = nama;
+                        document.getElementById('edit_deskripsi').value = deskripsi;
+                        document.getElementById('edit_warna').value = warna;
+                        document.getElementById('formEditDevisiAction').action = "{{ url('/dashboard/devisi') }}/" + id;
+                        toggleModal('modalEditDevisi');
+                    }
 
-                            // Ganti isi konten dengan data terbaru dari database
-                            const targetInfoContent = infoModal.querySelector('.animate-modal');
-                            const newInfoContent = doc.getElementById(idModalInfo).querySelector('.animate-modal');
-                            if (targetInfoContent && newInfoContent) {
-                                targetInfoContent.style.animation = 'none';
-                                targetInfoContent.innerHTML = newInfoContent.innerHTML;
-                            }
+                    // LOGIKA CAROUSEL GALERI DOKUMENTASI GLOBAL
+                    let carouselInterval;
 
-                            const targetEditContent = editModal.querySelector('.animate-modal');
-                            const newEditContent = doc.getElementById(idModalEdit).querySelector('.animate-modal');
-                            if (targetEditContent && newEditContent) {
-                                targetEditContent.innerHTML = newEditContent.innerHTML;
-                            }
+                    function initCarouselSlider() {
+                        if (carouselInterval) clearInterval(carouselInterval);
+                        let currentSlide = 0;
+                        const slides = document.querySelectorAll('#carouselGaleriDisplay .carousel-item');
+                        if (slides.length > 0) {
+                            slides.forEach((slide, idx) => {
+                                if (idx === 0) {
+                                    slide.classList.remove('opacity-0');
+                                    slide.classList.add('opacity-100');
+                                } else {
+                                    slide.classList.remove('opacity-100');
+                                    slide.classList.add('opacity-0');
+                                }
+                            });
+                            carouselInterval = setInterval(() => {
+                                if (slides.length <= 1) return;
+                                slides[currentSlide].classList.remove('opacity-100');
+                                slides[currentSlide].classList.add('opacity-0');
+                                currentSlide = (currentSlide + 1) % slides.length;
+                                slides[currentSlide].classList.remove('opacity-0');
+                                slides[currentSlide].classList.add('opacity-100');
+                            }, 3500);
+                        }
+                    }
 
+                    document.addEventListener("DOMContentLoaded", function() {
+                        initCarouselSlider();
+                        const popup = document.getElementById('popupAgenda');
+                        if (popup) {
                             document.body.style.overflow = 'hidden';
+                        }
+                    });
 
-                            // Tampilkan notifikasi sukses
-                            tampilkanToastSukses();
+                    // 1 EVENT LISTENER SUBMIT UNTUK SEMUA FORM (MENGGUNAKAN AJAX/LATAR BELAKANG)
+                    document.addEventListener('submit', function(e) {
+                        if (e.target && e.target.id === 'formEditGenbi') {
+                            e.preventDefault();
+                            prosesSimpanInstan(e.target, 'modalEditGenbi', 'modalInfoGenbi');
+                        } else if (e.target && e.target.id === 'formEditPoin') {
+                            e.preventDefault();
+                            prosesSimpanInstan(e.target, 'modalEditPoin', 'modalInfoPoin');
+                        } else if (e.target && e.target.id === 'formEditBeasiswa') {
+                            e.preventDefault();
+                            prosesSimpanInstan(e.target, 'modalEditBeasiswa', 'modalInfoBeasiswa');
+                        } else if (e.target && e.target.id === 'formHapusMasal') {
+                            e.preventDefault();
+                            prosesHapusMasalInstan(e.target);
+                        }
+                    });
 
-                            btn.innerText = originalText;
-                            btn.disabled = false;
-                        })
-                        .catch(error => {
-                            alert("Kesalahan koneksi saat menyimpan data!");
-                            btn.innerText = originalText;
-                            btn.disabled = false;
-                        });
-                }
+                    // FUNGSI UTAMA: PROSES HAPUS MASSAL TANPA REFRESH
+                    function prosesHapusMasalInstan(form) {
+                        let btn = document.getElementById('btnHapusMasal');
+                        let originalText = btn.innerHTML;
+                        let count = document.querySelectorAll('input[name="filenames[]"]:checked').length;
 
-                function tampilkanToastHapus(jumlah) {
-                    let existingToast = document.getElementById('toast-ajax');
-                    if (existingToast) existingToast.remove();
+                        if (!confirm('Apakah Anda yakin ingin menghapus ' + count + ' foto tersebut secara permanen?')) return;
 
-                    let div = document.createElement('div');
-                    div.innerHTML = `
+                        btn.innerText = "Menghapus...";
+                        btn.disabled = true;
+
+                        let token = document.querySelector('input[name="_token"]');
+
+                        fetch(form.action, {
+                                method: 'POST',
+                                body: new FormData(form),
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': token ? token.value : ''
+                                }
+                            })
+                            .then(response => {
+                                if (!response.ok) throw new Error('Network error');
+                                return response.text();
+                            })
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+
+                                document.getElementById('carouselGaleriDisplay').innerHTML = doc.getElementById(
+                                    'carouselGaleriDisplay').innerHTML;
+                                document.getElementById('gridFotoKelola').innerHTML = doc.getElementById('gridFotoKelola')
+                                    .innerHTML;
+
+                                document.getElementById('terpilihCount').innerText = "0";
+                                btn.innerHTML = originalText;
+                                btn.disabled = true;
+
+                                tampilkanToastHapus(count);
+                                initCarouselSlider();
+                            })
+                            .catch(error => {
+                                alert("Kesalahan koneksi saat menghapus foto!");
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                            });
+                    }
+
+                    // FUNGSI SIMPAN INFO & ATURAN POIN INSTAN (MENCEGAH REFRESH HALAMAN)
+                    function prosesSimpanInstan(form, idModalEdit, idModalInfo) {
+                        let btn = form.querySelector('button[type="submit"]');
+                        let originalText = btn.innerText;
+                        btn.innerText = "Menyimpan...";
+                        btn.disabled = true;
+
+                        // Pastikan Dynamic List disinkronkan ke Textarea sebelum di-submit
+                        if (form.id === 'formEditBeasiswa' && typeof syncDynamicList === 'function') {
+                            syncDynamicList('kriteria');
+                            syncDynamicList('dokumen');
+                        }
+
+                        let token = document.querySelector('input[name="_token"]');
+
+                        fetch(form.action, {
+                                method: 'POST',
+                                body: new FormData(form),
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': token ? token.value : ''
+                                }
+                            })
+                            .then(response => {
+                                if (!response.ok) throw new Error('Network error');
+                                return response.text();
+                            })
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+
+                                const editModal = document.getElementById(idModalEdit);
+                                const infoModal = document.getElementById(idModalInfo);
+
+                                // Tutup modal edit, buka modal info
+                                editModal.classList.add('hidden');
+                                editModal.classList.remove('flex');
+                                infoModal.classList.remove('hidden');
+                                infoModal.classList.add('flex');
+
+                                // Ganti isi konten dengan data terbaru dari database
+                                const targetInfoContent = infoModal.querySelector('.animate-modal');
+                                const newInfoContent = doc.getElementById(idModalInfo).querySelector('.animate-modal');
+                                if (targetInfoContent && newInfoContent) {
+                                    targetInfoContent.style.animation = 'none';
+                                    targetInfoContent.innerHTML = newInfoContent.innerHTML;
+                                }
+
+                                const targetEditContent = editModal.querySelector('.animate-modal');
+                                const newEditContent = doc.getElementById(idModalEdit).querySelector('.animate-modal');
+                                if (targetEditContent && newEditContent) {
+                                    targetEditContent.innerHTML = newEditContent.innerHTML;
+                                }
+
+                                document.body.style.overflow = 'hidden';
+
+                                // Tampilkan notifikasi sukses
+                                tampilkanToastSukses();
+
+                                btn.innerText = originalText;
+                                btn.disabled = false;
+                            })
+                            .catch(error => {
+                                alert("Kesalahan koneksi saat menyimpan data!");
+                                btn.innerText = originalText;
+                                btn.disabled = false;
+                            });
+                    }
+
+                    function tampilkanToastHapus(jumlah) {
+                        let existingToast = document.getElementById('toast-ajax');
+                        if (existingToast) existingToast.remove();
+
+                        let div = document.createElement('div');
+                        div.innerHTML = `
             <div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-red-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500">
                 <div class="bg-red-100 text-red-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div>
                 <div>
@@ -1783,108 +1790,108 @@
                     <p class="text-xs text-gray-500 font-medium mt-0.5">${jumlah} foto telah dihapus dari galeri.</p>
                 </div>
             </div>`;
-                    document.body.appendChild(div.firstElementChild);
-                    setTimeout(() => {
-                        let t = document.getElementById('toast-ajax');
-                        if (t) {
-                            t.style.opacity = '0';
-                            setTimeout(() => t.remove(), 500);
-                        }
-                    }, 3000);
-                }
+                        document.body.appendChild(div.firstElementChild);
+                        setTimeout(() => {
+                            let t = document.getElementById('toast-ajax');
+                            if (t) {
+                                t.style.opacity = '0';
+                                setTimeout(() => t.remove(), 500);
+                            }
+                        }, 3000);
+                    }
 
-                function tampilkanToastSukses() {
-                    let existingToast = document.getElementById('toast-ajax');
-                    if (existingToast) existingToast.remove();
+                    function tampilkanToastSukses() {
+                        let existingToast = document.getElementById('toast-ajax');
+                        if (existingToast) existingToast.remove();
 
-                    let div = document.createElement('div');
-                    div.innerHTML = `
+                        let div = document.createElement('div');
+                        div.innerHTML = `
             <div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-emerald-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500">
                 <div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
                 <div>
                     <p class="text-sm font-black text-gray-800">Berhasil Disimpan!</p>
                 </div>
             </div>`;
-                    document.body.appendChild(div.firstElementChild);
-                    setTimeout(() => {
-                        let t = document.getElementById('toast-ajax');
-                        if (t) {
-                            t.style.opacity = '0';
-                            setTimeout(() => t.remove(), 500);
-                        }
-                    }, 3000);
-                }
-
-                function toggleModal(modalID) {
-                    const modal = document.getElementById(modalID);
-                    if (modal) {
-                        if (modal.classList.contains('hidden')) {
-                            document.body.style.overflow = 'hidden';
-                            modal.classList.remove('hidden');
-                            modal.classList.add('flex');
-
-                            // Trigger Render Kotak Dinamis jika modal edit beasiswa dibuka
-                            if (modalID === 'modalEditBeasiswa' && document.getElementById('hidden_kriteria')) {
-                                initDynamicList('kriteria');
-                                initDynamicList('dokumen');
-                            }
-                        } else {
-                            document.body.style.overflow = 'auto';
-                            modal.classList.add('hidden');
-                            modal.classList.remove('flex');
-                        }
-                    }
-                }
-
-                function updateHapusButton() {
-                    const checkboxes = document.querySelectorAll('input[name="filenames[]"]:checked');
-                    const count = checkboxes.length;
-                    const btn = document.getElementById('btnHapusMasal');
-
-                    if (document.getElementById('terpilihCount')) document.getElementById('terpilihCount').innerText = count;
-                    if (btn) btn.disabled = count === 0;
-                }
-
-                function tutupPopupAgenda() {
-                    const modal = document.getElementById('popupAgenda');
-                    if (modal) {
-                        modal.classList.add('opacity-0', 'scale-95');
+                        document.body.appendChild(div.firstElementChild);
                         setTimeout(() => {
-                            modal.remove();
-                            document.body.style.overflow = 'auto';
-                        }, 250);
+                            let t = document.getElementById('toast-ajax');
+                            if (t) {
+                                t.style.opacity = '0';
+                                setTimeout(() => t.remove(), 500);
+                            }
+                        }, 3000);
                     }
-                }
 
-                // ==========================================
-                // DYNAMIC LIST BUILDER UNTUK BEASISWA
-                // ==========================================
-                function initDynamicList(type) {
-                    const hiddenInput = document.getElementById('hidden_' + type);
-                    const container = document.getElementById('container_' + type);
-                    container.innerHTML = '';
+                    function toggleModal(modalID) {
+                        const modal = document.getElementById(modalID);
+                        if (modal) {
+                            if (modal.classList.contains('hidden')) {
+                                document.body.style.overflow = 'hidden';
+                                modal.classList.remove('hidden');
+                                modal.classList.add('flex');
 
-                    const items = hiddenInput.value.split('\n');
-                    let hasValidItem = false;
-
-                    items.forEach(item => {
-                        if (item.trim() !== '') {
-                            addDynamicItem(type, item.trim());
-                            hasValidItem = true;
+                                // Trigger Render Kotak Dinamis jika modal edit beasiswa dibuka
+                                if (modalID === 'modalEditBeasiswa' && document.getElementById('hidden_kriteria')) {
+                                    initDynamicList('kriteria');
+                                    initDynamicList('dokumen');
+                                }
+                            } else {
+                                document.body.style.overflow = 'auto';
+                                modal.classList.add('hidden');
+                                modal.classList.remove('flex');
+                            }
                         }
-                    });
-
-                    if (!hasValidItem) {
-                        addDynamicItem(type, '');
                     }
-                }
 
-                function addDynamicItem(type, value = '') {
-                    const container = document.getElementById('container_' + type);
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'flex items-start gap-2.5 group animate-fade-in-down';
+                    function updateHapusButton() {
+                        const checkboxes = document.querySelectorAll('input[name="filenames[]"]:checked');
+                        const count = checkboxes.length;
+                        const btn = document.getElementById('btnHapusMasal');
 
-                    itemDiv.innerHTML = `
+                        if (document.getElementById('terpilihCount')) document.getElementById('terpilihCount').innerText = count;
+                        if (btn) btn.disabled = count === 0;
+                    }
+
+                    function tutupPopupAgenda() {
+                        const modal = document.getElementById('popupAgenda');
+                        if (modal) {
+                            modal.classList.add('opacity-0', 'scale-95');
+                            setTimeout(() => {
+                                modal.remove();
+                                document.body.style.overflow = 'auto';
+                            }, 250);
+                        }
+                    }
+
+                    // ==========================================
+                    // DYNAMIC LIST BUILDER UNTUK BEASISWA
+                    // ==========================================
+                    function initDynamicList(type) {
+                        const hiddenInput = document.getElementById('hidden_' + type);
+                        const container = document.getElementById('container_' + type);
+                        container.innerHTML = '';
+
+                        const items = hiddenInput.value.split('\n');
+                        let hasValidItem = false;
+
+                        items.forEach(item => {
+                            if (item.trim() !== '') {
+                                addDynamicItem(type, item.trim());
+                                hasValidItem = true;
+                            }
+                        });
+
+                        if (!hasValidItem) {
+                            addDynamicItem(type, '');
+                        }
+                    }
+
+                    function addDynamicItem(type, value = '') {
+                        const container = document.getElementById('container_' + type);
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'flex items-start gap-2.5 group animate-fade-in-down';
+
+                        itemDiv.innerHTML = `
                 <div class="mt-1 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-400 font-black text-xs flex-shrink-0 item-number transition-colors group-focus-within:bg-blue-100 group-focus-within:text-blue-600 border border-transparent group-focus-within:border-blue-200"></div>
                 <textarea rows="2" class="flex-1 border border-gray-200 hover:border-blue-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm text-gray-700 font-medium bg-white" placeholder="Ketik rincian di sini..." oninput="syncDynamicList('${type}')">${value}</textarea>
                 <button type="button" onclick="hapusDynamicItem(this, '${type}')" class="mt-1 w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 shadow-sm border border-red-100 hover:border-transparent" title="Hapus Poin">
@@ -1892,38 +1899,38 @@
                 </button>
             `;
 
-                    container.appendChild(itemDiv);
-                    syncDynamicList(type);
+                        container.appendChild(itemDiv);
+                        syncDynamicList(type);
 
-                    if (value === '') {
-                        const textarea = itemDiv.querySelector('textarea');
-                        textarea.focus();
-                        textarea.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                    }
-                }
-
-                function hapusDynamicItem(btnElement, type) {
-                    btnElement.parentElement.remove();
-                    syncDynamicList(type);
-                }
-
-                function syncDynamicList(type) {
-                    const container = document.getElementById('container_' + type);
-                    const textareas = container.querySelectorAll('textarea');
-                    const numbers = container.querySelectorAll('.item-number');
-
-                    let values = [];
-                    textareas.forEach((ta, index) => {
-                        if (numbers[index]) numbers[index].innerText = index + 1;
-                        if (ta.value.trim() !== '') {
-                            values.push(ta.value.trim());
+                        if (value === '') {
+                            const textarea = itemDiv.querySelector('textarea');
+                            textarea.focus();
+                            textarea.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
                         }
-                    });
+                    }
 
-                    document.getElementById('hidden_' + type).value = values.join('\n');
-                }
-            </script>
-        @endsection
+                    function hapusDynamicItem(btnElement, type) {
+                        btnElement.parentElement.remove();
+                        syncDynamicList(type);
+                    }
+
+                    function syncDynamicList(type) {
+                        const container = document.getElementById('container_' + type);
+                        const textareas = container.querySelectorAll('textarea');
+                        const numbers = container.querySelectorAll('.item-number');
+
+                        let values = [];
+                        textareas.forEach((ta, index) => {
+                            if (numbers[index]) numbers[index].innerText = index + 1;
+                            if (ta.value.trim() !== '') {
+                                values.push(ta.value.trim());
+                            }
+                        });
+
+                        document.getElementById('hidden_' + type).value = values.join('\n');
+                    }
+                </script>
+            @endsection

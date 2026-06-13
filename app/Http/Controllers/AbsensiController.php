@@ -54,39 +54,48 @@ class AbsensiController extends Controller
 
     public function store(Request $request)
     {
-        // PERBAIKAN: Menyesuaikan validasi dengan nama input di View ('kegiatan_nama')
+        // 1. Ambil nama kegiatan (jika ada) dari data baris pertama
+        $kegiatanNama = '';
+        if ($request->has('absensi') && is_array($request->absensi)) {
+            $firstItem = collect($request->absensi)->first();
+            $kegiatanNama = $firstItem['kegiatan_nama'] ?? '';
+        }
+
+        // 2. KUNCI PERBAIKAN: Cek apakah $kegiatanNama kosong (belum dipilih)
+        if (empty($kegiatanNama)) {
+            // Segera kembalikan ke halaman dan munculkan notifikasi error khusus
+            return redirect()->back()->with('error', 'Gagal disimpan. Mohon pilih kegiatannya terlebih dahulu pada menu dropdown!');
+        }
+
+        // 3. Jika sudah ada isinya, lanjut validasi normal
         $request->validate([
             'absensi' => 'required|array',
             'absensi.*.status' => 'required|in:H,A,I,S',
             'absensi.*.kegiatan_nama' => 'required|string',
         ]);
 
-        $kegiatanNama = collect($request->absensi)->first()['kegiatan_nama'] ?? '';
+        // 4. Proses Simpan Data
+        foreach ($request->absensi as $userId => $data) {
+            $user = User::find($userId);
+            if ($user) {
+                // Menyesuaikan devisi untuk Pengurus Inti
+                $devisiFinal = $user->devisi;
+                if ($user->role == 'admin') $devisiFinal = 'Ketua Umum';
+                elseif ($user->role == 'sekretaris') $devisiFinal = 'Sekretaris Umum';
+                elseif ($user->role == 'bendahara') $devisiFinal = 'Bendahara Umum';
 
-        if (!empty($kegiatanNama)) {
-            foreach ($request->absensi as $userId => $data) {
-                $user = User::find($userId);
-                if ($user) {
-
-                    // Menyesuaikan devisi untuk Pengurus Inti
-                    $devisiFinal = $user->devisi;
-                    if ($user->role == 'admin') $devisiFinal = 'Ketua Umum';
-                    elseif ($user->role == 'sekretaris') $devisiFinal = 'Sekretaris Umum';
-                    elseif ($user->role == 'bendahara') $devisiFinal = 'Bendahara Umum';
-
-                    Absensi::updateOrCreate(
-                        [
-                            'nim'      => $user->nim,
-                            'kegiatan' => $kegiatanNama,
-                        ],
-                        [
-                            'nama_lengkap' => $user->name,
-                            'jurusan'      => $user->jurusan ?? '-',
-                            'devisi'       => $devisiFinal,
-                            'status'       => $data['status'],
-                        ]
-                    );
-                }
+                Absensi::updateOrCreate(
+                    [
+                        'nim'      => $user->nim,
+                        'kegiatan' => $kegiatanNama,
+                    ],
+                    [
+                        'nama_lengkap' => $user->name,
+                        'jurusan'      => $user->jurusan ?? '-',
+                        'devisi'       => $devisiFinal,
+                        'status'       => $data['status'],
+                    ]
+                );
             }
         }
 

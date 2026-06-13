@@ -87,9 +87,8 @@
 
         <div class="relative z-10 text-center text-white px-12 animate-fade-in">
             <div
-                class="w-40 h-40 mx-auto mb-8 p-4 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/20 shadow-2xl transform hover:scale-105 transition duration-500">
-                <img src="{{ asset('logo_kiri.png') }}" alt="Logo GenBI"
-                    class="w-full h-full object-contain filter drop-shadow-md">
+                class="w-40 h-40 mx-auto mb-8 p-5 bg-white rounded-[2rem] shadow-[0_15px_35px_rgba(0,0,0,0.2)] ring-4 ring-white/30 transform hover:scale-105 transition duration-500 flex items-center justify-center relative z-20">
+                <img src="{{ asset('logo_kiri.png') }}" alt="Logo GenBI" class="w-full h-full object-contain">
             </div>
 
             <h1 class="text-4xl font-extrabold tracking-tight mb-4">Sistem Informasi GenBI</h1>
@@ -176,33 +175,75 @@
                                     </path>
                                 </svg>
                             </div>
-                            <input type="password" name="password" required placeholder="••••••••"
-                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
+
+                            <input type="password" name="password" id="password" required placeholder="••••••••"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-12 focus:outline-none focus:border-primary-blue focus:ring-4 focus:ring-primary-blue/15 text-sm transition-all duration-300 font-semibold text-gray-800 focus:bg-white placeholder-gray-400">
+
+                            <button type="button" id="togglePassword"
+                                class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-primary-blue focus:outline-none transition-colors duration-300">
+                                <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                    </path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <div class="flex items-center justify-end">
-                    <a href="{{ route('password.forgot') }}"
-                        class="text-sm font-bold text-primary-blue hover:text-primary-dark transition-colors border-b-2 border-transparent hover:border-primary-blue pb-0.5">
-                        Lupa Kata Sandi?
-                    </a>
-                </div>
+                    <div class="flex items-center justify-end">
+                        <a href="{{ route('password.forgot') }}"
+                            class="text-sm font-bold text-primary-blue hover:text-primary-dark transition-colors border-b-2 border-transparent hover:border-primary-blue pb-0.5">
+                            Lupa Kata Sandi?
+                        </a>
+                    </div>
 
-                <button type="submit"
-                    class="w-full relative overflow-hidden group bg-primary-blue hover:bg-primary-dark text-white rounded-2xl py-4 font-bold text-sm tracking-wide shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
-                    <span class="relative z-10 flex items-center justify-center gap-2">
-                        Login
-                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                        </svg>
-                    </span>
-                </button>
+                    <button type="submit"
+                        class="w-full relative overflow-hidden group bg-primary-blue hover:bg-primary-dark text-white rounded-2xl py-4 font-bold text-sm tracking-wide shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            Login
+                            <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </span>
+                    </button>
             </form>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const passwordInput = document.getElementById('password');
+            const togglePasswordButton = document.getElementById('togglePassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (togglePasswordButton && passwordInput) {
+                togglePasswordButton.addEventListener('click', function() {
+                    const isPassword = passwordInput.getAttribute('type') === 'password';
+
+                    // Ubah tipe input
+                    passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+                    // Ubah Ikon Mata
+                    if (isPassword) {
+                        // Ikon Mata Dicoret
+                        eyeIcon.innerHTML = `
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.12-5.835m3.23-1.166C10.524 4.14 11.251 4 12 4c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.828M9.758 9.758L14.242 14.242M9.88 9.88a3 3 0 104.24 4.24M3 3l18 18"></path>
+                        `;
+                    } else {
+                        // Ikon Mata Normal
+                        eyeIcon.innerHTML = `
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        `;
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 
