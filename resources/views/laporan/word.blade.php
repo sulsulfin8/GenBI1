@@ -230,26 +230,27 @@
     <br><br>
     <table style="width: 100%; border: none; border-collapse: collapse;">
         <tr>
-            <td style="width: 50%; border: none;"></td>
-            <td style="width: 50%; text-align: center; vertical-align: bottom; border: none;">
+            <!-- PERBAIKAN: Kolom kosong di kiri diperlebar menjadi 75% -->
+            <td style="width: 75%; border: none;"></td>
+
+            <!-- Kolom TTD diperkecil menjadi 25% agar benar-benar mentok ke kanan -->
+            <td style="width: 25%; text-align: center; vertical-align: bottom; border: none;">
                 <p style="margin: 0;">Kolaka, {{ now()->format('d M Y') }}</p>
                 <p style="margin: 0;">Ketua Umum,</p>
 
                 <div style="margin-top: 10px; margin-bottom: 10px;">
                     @if ($isVerifikasi)
                         @if (!empty($adminData->ttd))
-                            <!-- UKURAN TANDA TANGAN DIPERBESAR MENJADI 110 -->
                             <img src="{{ $adminData->ttd }}" height="110">
                         @else
                             <div style="height: 110px;"></div>
                         @endif
                     @else
-                        <!-- UKURAN QR CODE JUGA SEDIKIT DIPERBESAR -->
                         <img src="data:image/png;base64,{{ $qrCodeBase64 }}" width="80">
                     @endif
                 </div>
 
-                <p style="margin: 0; font-weight: bold;">(
+                <p style="margin: 0; font-weight: bold; white-space: nowrap;">(
                     {{ $adminData->nama ?? '........................................' }} )</p>
             </td>
         </tr>

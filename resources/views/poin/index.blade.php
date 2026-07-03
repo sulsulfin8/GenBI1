@@ -706,8 +706,7 @@
                     document.getElementById('inputKeterangan').value = "";
                 }
             }
-            // --- LOGIKA MODAL PEMBATALAN SELEKTIF ---
-            // --- LOGIKA MODAL PEMBATALAN SELEKTIF (VERSI AJAX / TANPA KEDIP) ---
+            /// --- LOGIKA MODAL PEMBATALAN SELEKTIF (VERSI AJAX / TANPA KEDIP) ---
             let hasPoinChanged = false; // Flag penanda jika ada data yang terhapus
 
             function bukaModalBatalPoin(nim, nama, keterangan) {
@@ -720,35 +719,65 @@
                         "<p class='italic text-gray-400 text-xs text-center py-6'>Belum ada catatan aktivitas poin manual.</p>";
                 } else {
                     const splitKet = keterangan.includes('|') ? keterangan.split("|") : [keterangan];
-                    let validItemsCount = 0;
 
+                    // Filter yang valid dan simpan INDEX ASLINYA agar database tidak salah hapus
+                    let validItems = [];
                     splitKet.forEach((item, index) => {
                         let textItem = item.trim();
                         if (textItem !== "" && textItem !== "-" && !textItem.includes("Absensi ()")) {
-                            validItemsCount++;
-
-                            let isPlus = textItem.includes('+');
-                            let divItem = document.createElement('div');
-                            divItem.className =
-                                "flex items-center justify-between p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-red-300 transition-all gap-3";
-
-                            // KUNCI PERBAIKAN: Form lama dihapus, diganti jadi tombol pemicu JavaScript
-                            divItem.innerHTML = `
-                                <div class="flex items-center gap-2 max-w-[70%]">
-                                    <span class="w-2 h-2 rounded-full ${isPlus ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'} flex-shrink-0"></span>
-                                    <span class="text-xs font-bold text-gray-700 leading-relaxed">${textItem}</span>
-                                </div>
-                                <button type="button" onclick="hapusItemPoinAjax('${nim}', '${nama}', ${index})" class="px-3 py-1.5 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white rounded-xl text-[11px] font-black transition-all shadow-sm">
-                                    Hapus
-                                </button>
-                            `;
-                            container.appendChild(divItem);
+                            validItems.push({
+                                text: textItem,
+                                originalIndex: index
+                            });
                         }
                     });
 
-                    if (validItemsCount === 0) {
+                    if (validItems.length === 0) {
                         container.innerHTML =
                             "<p class='italic text-gray-400 text-xs text-center py-6'>Belum ada catatan aktivitas poin manual.</p>";
+                    } else {
+                        // Balik urutan agar riwayat TERBARU berada di posisi PALING ATAS
+                        validItems.reverse();
+
+                        // Batasi hanya 5 riwayat terbaru yang ditampilkan agar tidak lemot
+                        const batasTampil = 5;
+                        const itemDitampilkan = validItems.slice(0, batasTampil);
+
+                        // Berikan peringatan informasi yang rapi di atas
+                        container.innerHTML = `
+                            <div class="text-[11px] font-bold text-amber-700 bg-amber-50 px-3 py-2.5 rounded-xl mb-3 border border-amber-200 flex items-start gap-2">
+                                <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>Menampilkan <b>${itemDitampilkan.length} aktivitas terbaru</b>.</span>
+                            </div>
+                        `;
+
+                        // Render item-item tersebut
+                        itemDitampilkan.forEach((itemObj) => {
+                            let isPlus = itemObj.text.includes('+');
+                            let divItem = document.createElement('div');
+                            divItem.className =
+                                "flex items-center justify-between p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-red-300 transition-all gap-3 mb-2.5";
+
+                            divItem.innerHTML = `
+                                <div class="flex items-center gap-2 max-w-[70%]">
+                                    <span class="w-2 h-2 rounded-full ${isPlus ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'} flex-shrink-0"></span>
+                                    <span class="text-xs font-bold text-gray-700 leading-relaxed">${itemObj.text}</span>
+                                </div>
+                                <button type="button" onclick="hapusItemPoinAjax('${nim}', '${nama}', ${itemObj.originalIndex})" class="px-3 py-1.5 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white rounded-xl text-[11px] font-black transition-all shadow-sm">
+                                    Batal
+                                </button>
+                            `;
+                            container.appendChild(divItem);
+                        });
+
+                        // Tampilkan info tambahan jika ada sisa riwayat lama yang disembunyikan
+                        if (validItems.length > batasTampil) {
+                            let sisaTeks = document.createElement('p');
+                            sisaTeks.className = "text-[10px] text-center text-gray-400 font-bold mt-3";
+                            sisaTeks.innerText =
+                                `+ ${validItems.length - batasTampil} riwayat lama disembunyikan untuk efisiensi.`;
+                            container.appendChild(sisaTeks);
+                        }
                     }
                 }
 
