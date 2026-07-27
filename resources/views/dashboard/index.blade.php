@@ -1174,15 +1174,21 @@
                                                 @php
                                                     $parts = explode(':', $item);
                                                     $name = $parts[0] ?? $item;
-                                                    $score = $parts[1] ?? '';
-                                                    $scoreNum = trim(str_ireplace('Poin', '', $score));
+
+                                                    // KUNCI PERBAIKAN 1: Cari angka, bersihkan spasi, lalu paksa menjadi nilai mutlak (pasti positif)
+                                                    preg_match('/-?\s*\d+/', $parts[1] ?? '', $matches);
+                                                    $val = isset($matches[0])
+                                                        ? abs((int) str_replace(' ', '', $matches[0]))
+                                                        : 0;
                                                 @endphp
                                                 <div
                                                     class="bg-white border border-green-100 rounded-2xl p-5 text-center shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col justify-center items-center">
                                                     <p class="text-xs text-gray-500 mb-1 font-bold uppercase">
                                                         {{ trim($name) }}
                                                     </p>
-                                                    <p class="text-2xl font-black text-green-600">{{ $scoreNum }}
+
+                                                    <!-- KUNCI PERBAIKAN 2: Tambahkan tanda minus (-) secara manual sebelum angka -->
+                                                    <p class="text-2xl font-black text-green-600">-{{ $val }}
                                                         <span class="text-sm font-medium">Poin</span>
                                                     </p>
                                                 </div>

@@ -484,6 +484,7 @@
                                 <select id="pilihanAturan" onchange="setNilaiPoin()" required
                                     class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 cursor-pointer font-semibold text-gray-700 appearance-none transition-all">
                                     <option value="">-- Silakan Pilih Kategori --</option>
+
                                     <optgroup label="  Pelanggaran (+ Poin)">
                                         @php $pelanggaranArr = explode("\n", str_replace("\r", "", $info->pelanggaran ?? "")); @endphp
                                         @foreach ($pelanggaranArr as $p)
@@ -492,8 +493,7 @@
                                                     $split = explode(':', $p);
                                                     $label = trim($split[0]);
                                                     $lowerLabel = strtolower(trim($label));
-
-                                                    // PERBAIKAN: Memperluas filter agar mendeteksi variasi kata Alpa, Izin, Tidak Hadir, (A), dan (I)
+                                                    // Filter agar mendeteksi variasi kata Alpa, Izin, Tidak Hadir, dll
                                                     $isAbsensi =
                                                         str_contains($lowerLabel, 'alpa') ||
                                                         str_contains($lowerLabel, 'izin') ||
@@ -503,8 +503,12 @@
                                                 @endphp
                                                 @if (!$isAbsensi)
                                                     @php
-                                                        preg_match('/-?\d+/', $split[1] ?? '', $matches);
-                                                        $val = isset($matches[0]) ? (int) $matches[0] : 0;
+                                                        // Membaca angka meskipun ada spasi antara tanda dan angka
+                                                        preg_match('/-?\s*\d+/', $split[1] ?? '', $matches);
+                                                        // Bersihkan spasi, jadikan integer, lalu paksa jadi POSITIF menggunakan abs()
+                                                        $val = isset($matches[0])
+                                                            ? abs((int) str_replace(' ', '', $matches[0]))
+                                                            : 0;
                                                     @endphp
                                                     <option value="{{ $val }}|{{ $label }}">
                                                         {{ $label }} ({{ $val > 0 ? '+' . $val : $val }} Poin)
@@ -513,30 +517,38 @@
                                             @endif
                                         @endforeach
                                     </optgroup>
-                                    <optgroup label="🔵 Aturan QRIS (+ Poin)">
+
+                                    <optgroup label="  Aturan QRIS (+ Poin)">
                                         @php $qrisArr = explode("\n", str_replace("\r", "", $info->qris ?? "")); @endphp
                                         @foreach ($qrisArr as $q)
                                             @if (trim($q) != '')
                                                 @php
                                                     $split = explode(':', $q);
                                                     $label = trim($split[0]);
-                                                    preg_match('/-?\d+/', $split[1] ?? '', $matches);
-                                                    $val = isset($matches[0]) ? (int) $matches[0] : 0;
+                                                    preg_match('/-?\s*\d+/', $split[1] ?? '', $matches);
+                                                    // Paksa jadi POSITIF
+                                                    $val = isset($matches[0])
+                                                        ? abs((int) str_replace(' ', '', $matches[0]))
+                                                        : 0;
                                                 @endphp
                                                 <option value="{{ $val }}|{{ $label }}">
                                                     {{ $label }} ({{ $val > 0 ? '+' . $val : $val }} Poin)</option>
                                             @endif
                                         @endforeach
                                     </optgroup>
-                                    <optgroup label="🟢 Apresiasi (- Poin)">
+
+                                    <optgroup label="  Apresiasi (- Poin)">
                                         @php $apresiasiArr = explode("\n", str_replace("\r", "", $info->apresiasi ?? "")); @endphp
                                         @foreach ($apresiasiArr as $a)
                                             @if (trim($a) != '')
                                                 @php
                                                     $split = explode(':', $a);
                                                     $label = trim($split[0]);
-                                                    preg_match('/-?\d+/', $split[1] ?? '', $matches);
-                                                    $val = isset($matches[0]) ? (int) $matches[0] : 0;
+                                                    preg_match('/-?\s*\d+/', $split[1] ?? '', $matches);
+                                                    // KUNCI PERBAIKAN: Paksa nilai menjadi MINUS (pengurangan) bagaimanapun cara admin mengetiknya
+                                                    $val = isset($matches[0])
+                                                        ? -abs((int) str_replace(' ', '', $matches[0]))
+                                                        : 0;
                                                 @endphp
                                                 <option value="{{ $val }}|{{ $label }}">
                                                     {{ $label }} ({{ $val > 0 ? '+' . $val : $val }} Poin)</option>
