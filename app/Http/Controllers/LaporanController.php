@@ -193,6 +193,41 @@ class LaporanController extends Controller
         if ($request->tahun) $queryKegiatan->whereYear('tanggal', $request->tahun);
         $kegiatanAktif = $queryKegiatan->pluck('nama_kegiatan');
 
+        $info = \App\Models\Info::first();
+        $sp1Min = 25;
+        $sp2Min = 50;
+        $sp3Min = 100;
+
+        if ($info && !empty($info->sp)) {
+            $spLines = explode("\n", str_replace("\r", "", $info->sp));
+            foreach ($spLines as $line) {
+                if (trim($line) != '') {
+                    $parts = explode(':', $line);
+                    if (count($parts) == 2) {
+                        $label = strtolower(trim($parts[0]));
+                        $valStr = $parts[1];
+                        preg_match_all('/\d+/', $valStr, $matches);
+                        if (!empty($matches[0])) {
+                            $min = min(array_map('intval', $matches[0]));
+                            if (strpos($valStr, '>') !== false) {
+                                $min += 1;
+                            }
+                            
+                            if (preg_match('/sp\s*1/i', $label)) $sp1Min = $min;
+                            elseif (preg_match('/sp\s*2/i', $label)) $sp2Min = $min;
+                            elseif (preg_match('/sp\s*3/i', $label)) $sp3Min = $min;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if ($sp1Min >= $sp2Min || $sp2Min >= $sp3Min) {
+            $sp1Min = 25;
+            $sp2Min = 50;
+            $sp3Min = 100;
+        }
+
         foreach ($users as $user) {
             if (empty($user->nim)) continue;
 
@@ -207,7 +242,41 @@ class LaporanController extends Controller
             $ketAbsensi = [];
             if ($alpa > 0) $ketAbsensi[] = "Alpa $alpa";
             if ($izin > 0) $ketAbsensi[] = "Izin $izin";
-            $stringKeterangan = empty($ketAbsensi) ? "-" : "Absensi: " . implode(', ', $ketAbsensi);
+            
+            $ketManual = $poinRecord && !empty($poinRecord->keterangan) ? $poinRecord->keterangan : '-';
+            
+            $htmlList = "<ul style='margin: 0; padding-left: 15px; text-align: left; font-size: 9pt; line-height: 1.3;'>";
+            $hasItems = false;
+            
+            if ($ketManual !== '-') {
+                $ketManual = preg_replace('/\s*=\s*([+-]?\s*\d+\s*poin)/i', ' ($1)', $ketManual);
+                $items = array_map('trim', explode('|', $ketManual));
+                foreach ($items as $item) {
+                    if (!empty($item)) {
+                        $htmlList .= "<li>" . htmlspecialchars($item) . "</li>";
+                        $hasItems = true;
+                    }
+                }
+            }
+
+            if (!empty($ketAbsensi)) {
+                $stringAbsensi = "Absensi (" . implode(', ', $ketAbsensi) . ")";
+                $htmlList .= "<li>" . htmlspecialchars($stringAbsensi) . "</li>";
+                $hasItems = true;
+            }
+            
+            $htmlList .= "</ul>";
+            
+            $stringKeterangan = $hasItems ? $htmlList : "-";
+
+            $spVal = 'Aman';
+            if ($grandTotal >= $sp3Min) {
+                $spVal = 'SP 3';
+            } elseif ($grandTotal >= $sp2Min) {
+                $spVal = 'SP 2';
+            } elseif ($grandTotal >= $sp1Min) {
+                $spVal = 'SP 1';
+            }
 
             $rekapData[] = (object)[
                 'nim'          => $user->nim,
@@ -216,7 +285,7 @@ class LaporanController extends Controller
                 'poin_absensi' => $poinAbsensi,
                 'poin_manual'  => $poinManual,
                 'total_poin'   => max(0, $grandTotal),
-                'sp'           => $grandTotal >= 100 ? 'SP 3' : ($grandTotal >= 50 ? 'SP 2' : ($grandTotal >= 25 ? 'SP 1' : 'Aman')),
+                'sp'           => $spVal,
                 'keterangan'   => $stringKeterangan
             ];
         }

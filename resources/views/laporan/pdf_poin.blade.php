@@ -37,7 +37,7 @@
             border: 1px solid black;
             padding: 6px;
             text-align: center;
-            vertical-align: top;
+            vertical-align: middle;
         }
 
         table.data th {
@@ -133,7 +133,7 @@
                 ">
                         {{ $data->sp }}</td>
 
-                    <td class="keterangan-teks">{{ $data->keterangan }}</td>
+                    <td class="keterangan-teks">{!! $data->keterangan !!}</td>
                 </tr>
             @endforeach
         </tbody>

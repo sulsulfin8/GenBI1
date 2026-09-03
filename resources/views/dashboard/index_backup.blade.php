@@ -11,6 +11,12 @@
 
         $valKriteria = !empty($info->kriteria_beasiswa) ? $info->kriteria_beasiswa : $defaultKriteria;
         $valDokumen = !empty($info->dokumen_beasiswa) ? $info->dokumen_beasiswa : $defaultDokumen;
+
+        // Nilai Aturan Poin
+        $valPelanggaran = !empty($info->pelanggaran) ? $info->pelanggaran : '';
+        $valQris = !empty($info->qris) ? $info->qris : '';
+        $valApresiasi = !empty($info->apresiasi) ? $info->apresiasi : "Rajin: -3 Poin\nAktif: -2 Poin";
+        $valSp = !empty($info->sp) ? $info->sp : "SP 1 (Komisariat): 25\nSP 2 (Wilayah): 50\nSP 3 (Pembina): >50";
     @endphp
 
     <div class="flex items-center gap-3 mb-6 animate-fade-in-down">
@@ -686,10 +692,10 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Misi (Pisahkan tiap
-                                    misi dengan
-                                    baris baru)</label>
+                                    misi dengan baris baru)</label>
                                 <textarea name="misi" rows="6" required
-                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all">{{ $info->misi ?? '' }}</textarea>
+                                    class="w-full border-2 border-gray-200 hover:border-blue-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all resize-none shadow-sm text-gray-700 font-medium"
+                                    placeholder="Tuliskan misi organisasi di sini... (Pisahkan dengan baris baru)">{{ !empty($info->misi) ? $info->misi : '' }}</textarea>
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Komitmen &
@@ -723,7 +729,8 @@
                                 </svg></button>
                         </div>
                         <form id="formEditPoin" action="{{ route('dashboard.update_poin') }}" method="POST"
-                            class="p-6 space-y-6 overflow-y-auto hide-scrollbar flex-1 z-10">
+                            class="p-6 space-y-6 overflow-y-auto hide-scrollbar flex-1 z-10"
+                            onsubmit="syncAllBeforeSubmit(event, this)">
                             @csrf
                             <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 flex gap-3 items-start">
                                 <svg class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none"
@@ -731,72 +738,20 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                                <p class="text-sm text-blue-800 font-medium leading-relaxed"><b>Panduan:</b> Gunakan format
-                                    <code>Nama Aturan: Nilai Poin</code>. Pisahkan setiap aturan dengan baris baru (Enter).
+                                <p class="text-sm text-blue-900 font-medium leading-relaxed"><b>Panduan:</b> Gunakan format
+                                    <code>Nama Aturan: Nilai Poin</code> (tanpa koma). Klik tombol "+ Tambah" untuk menambah
+                                    aturan baru secara spesifik.
                                 </p>
                             </div>
+
                             <textarea name="pelanggaran" id="hidden_pelanggaran" style="display:none"
-                                data-init="{{ htmlspecialchars(str_replace(["\r\n", "\r", "\n"], '&#10;', $info->pelanggaran ?? ''), ENT_QUOTES) }}">{{ $info->pelanggaran ?? '' }}</textarea>
+                                data-init="{{ str_replace(["\r\n", "\r", "\n"], '&#10;', $valPelanggaran) }}">{{ $valPelanggaran }}</textarea>
                             <textarea name="qris" id="hidden_qris" style="display:none"
-                                data-init="{{ htmlspecialchars(str_replace(["\r\n", "\r", "\n"], '&#10;', $info->qris ?? ''), ENT_QUOTES) }}">{{ $info->qris ?? '' }}</textarea>
+                                data-init="{{ str_replace(["\r\n", "\r", "\n"], '&#10;', $valQris) }}">{{ $valQris }}</textarea>
                             <textarea name="apresiasi" id="hidden_apresiasi" style="display:none"
-                                data-init="{{ htmlspecialchars(str_replace(["\r\n", "\r", "\n"], '&#10;', $info->apresiasi ?? "Rajin: -3 Poin\nAktif: -2 Poin"), ENT_QUOTES) }}">{{ $info->apresiasi ?? "Rajin: -3 Poin\nAktif: -2 Poin" }}</textarea>
+                                data-init="{{ str_replace(["\r\n", "\r", "\n"], '&#10;', $valApresiasi) }}">{{ $valApresiasi }}</textarea>
                             <textarea name="sp" id="hidden_sp" style="display:none"
-                                data-init="{{ htmlspecialchars(str_replace(["\r\n", "\r", "\n"], '&#10;', $info->sp ?? "SP 1 (Komisariat): 25\nSP 2 (Wilayah): 50\nSP 3 (Pembina): >50"), ENT_QUOTES) }}">{{ $info->sp ?? "SP 1 (Komisariat): 25\nSP 2 (Wilayah): 50\nSP 3 (Pembina): >50" }}</textarea>
-
-                            <!-- DATA AWAL KATEGORI POIN DARI SERVER (JSON) -->
-                            <script id="kategoriPoinInitData" type="application/json">{!! json_encode($kategoriPoins->pluck('aturan', 'id')->map(function($v) { return $v ?? ''; })) !!}</script>
-
-                            <!-- MANAJEMEN KATEGORI TAMBAHAN (DINAMIS) -->
-                            @if(isset($kategoriPoins) && $kategoriPoins->count() > 0)
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                    @foreach($kategoriPoins as $kp)
-                                        <textarea name="kategori_custom[{{ $kp->id }}]" id="hidden_custom_{{ $kp->id }}" style="display:none">{{ $kp->aturan }}</textarea>
-                                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                                            <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
-                                                <label class="block text-xs font-black text-gray-800 uppercase tracking-tight">{{ $kp->nama_kategori }}</label>
-                                                <div class="flex gap-2 items-center">
-                                                    <button type="button" onclick="addDynamicItem('custom_{{ $kp->id }}')" class="text-[10px] font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">
-                                                        + Tambah
-                                                    </button>
-                                                    <button type="button" onclick="hapusKategoriPoinAjax({{ $kp->id }}, this, '{{ addslashes($kp->nama_kategori) }}')" class="text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm" title="Hapus Seluruh Kategori">
-                                                        Hapus
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div id="container_custom_{{ $kp->id }}" class="space-y-3 pb-2">
-                                                @php
-                                                    $aturanArray = explode("\n", str_replace("\r", "", $kp->aturan ?? ''));
-                                                    $hasItems = false;
-                                                    $indexInput = 1;
-                                                @endphp
-                                                @foreach ($aturanArray as $item)
-                                                    @if (trim($item) !== '')
-                                                        @php $hasItems = true; @endphp
-                                                        <div class="flex items-start gap-2.5 group animate-fade-in-down">
-                                                            <div class="mt-1 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-400 font-black text-xs flex-shrink-0 item-number transition-colors group-focus-within:bg-blue-100 group-focus-within:text-blue-600 border border-transparent group-focus-within:border-blue-200">{{ $indexInput++ }}</div>
-                                                            <textarea rows="2" class="flex-1 border border-gray-200 hover:border-blue-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm text-gray-700 font-medium bg-white" placeholder="Ketik rincian di sini..." oninput="syncDynamicList('custom_{{ $kp->id }}')">{{ trim($item) }}</textarea>
-                                                            <button type="button" onclick="hapusDynamicItem(this, 'custom_{{ $kp->id }}')" class="mt-1 w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 shadow-sm border border-red-100 hover:border-transparent" title="Hapus Poin">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                            </button>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                                @if (!$hasItems)
-                                                    <div class="flex items-start gap-2.5 group animate-fade-in-down">
-                                                        <div class="mt-1 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-400 font-black text-xs flex-shrink-0 item-number transition-colors group-focus-within:bg-blue-100 group-focus-within:text-blue-600 border border-transparent group-focus-within:border-blue-200">1</div>
-                                                        <textarea rows="2" class="flex-1 border border-gray-200 hover:border-blue-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm text-gray-700 font-medium bg-white" placeholder="Ketik rincian di sini..." oninput="syncDynamicList('custom_{{ $kp->id }}')"></textarea>
-                                                        <button type="button" onclick="hapusDynamicItem(this, 'custom_{{ $kp->id }}')" class="mt-1 w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 shadow-sm border border-red-100 hover:border-transparent" title="Hapus Poin">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                            <!-- END MANAJEMEN KATEGORI TAMBAHAN -->
+                                data-init="{{ str_replace(["\r\n", "\r", "\n"], '&#10;', $valSp) }}">{{ $valSp }}</textarea>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
@@ -807,7 +762,6 @@
                                         <button type="button" onclick="addDynamicItem('pelanggaran')"
                                             class="text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">+
                                             Tambah</button>
-                                        <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus kategori ini?')) { document.getElementById('hidden_pelanggaran').value = ''; document.getElementById('container_pelanggaran').innerHTML = ''; document.getElementById('container_pelanggaran').closest('.bg-white').style.display = 'none'; }" class="ml-2 text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">Hapus</button>
                                     </div>
                                     <div id="container_pelanggaran" class="space-y-3 pb-2"></div>
                                 </div>
@@ -819,7 +773,6 @@
                                         <button type="button" onclick="addDynamicItem('qris')"
                                             class="text-[10px] font-bold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">+
                                             Tambah</button>
-                                        <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus kategori ini?')) { document.getElementById('hidden_qris').value = ''; document.getElementById('container_qris').innerHTML = ''; document.getElementById('container_qris').closest('.bg-white').style.display = 'none'; }" class="ml-2 text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">Hapus</button>
                                     </div>
                                     <div id="container_qris" class="space-y-3 pb-2"></div>
                                 </div>
@@ -831,7 +784,6 @@
                                         <button type="button" onclick="addDynamicItem('apresiasi')"
                                             class="text-[10px] font-bold text-green-600 hover:text-white bg-green-50 hover:bg-green-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">+
                                             Tambah</button>
-                                        <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus kategori ini?')) { document.getElementById('hidden_apresiasi').value = ''; document.getElementById('container_apresiasi').innerHTML = ''; document.getElementById('container_apresiasi').closest('.bg-white').style.display = 'none'; }" class="ml-2 text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">Hapus</button>
                                     </div>
                                     <div id="container_apresiasi" class="space-y-3 pb-2"></div>
                                 </div>
@@ -843,7 +795,6 @@
                                         <button type="button" onclick="addDynamicItem('sp')"
                                             class="text-[10px] font-bold text-purple-600 hover:text-white bg-purple-50 hover:bg-purple-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">+
                                             Tambah</button>
-                                        <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus kategori ini?')) { document.getElementById('hidden_sp').value = ''; document.getElementById('container_sp').innerHTML = ''; document.getElementById('container_sp').closest('.bg-white').style.display = 'none'; }" class="ml-2 text-[10px] font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm">Hapus</button>
                                     </div>
                                     <div id="container_sp" class="space-y-3 pb-2"></div>
                                 </div>
@@ -958,41 +909,6 @@
                     </div>
                 </div>
             @endif
-
-            <!-- Modal Tambah Kategori -->
-            <div id="modalTambahKategori" class="fixed inset-0 z-[70] hidden bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 transition-all">
-                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 relative animate-modal">
-                    <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-4">
-                        <h3 class="text-xl font-black text-gray-800 leading-tight">Tambah Kategori Poin</h3>
-                        <button type="button" onclick="toggleModal('modalTambahKategori')"
-                            class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition"><svg
-                                class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg></button>
-                    </div>
-                    <form id="formTambahKategori" action="{{ route('dashboard.kategori_poin.store') }}" method="POST" class="space-y-4">
-                        @csrf
-                        <div>
-                            <label class="block text-xs font-black text-gray-500 uppercase mb-2">Nama Kategori</label>
-                            <input type="text" name="nama_kategori" required placeholder="Contoh: ATURAN KHUSUS"
-                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-black text-gray-500 uppercase mb-2">Aturan Poin</label>
-                            <textarea name="aturan" rows="4" placeholder="Format: Nama Aturan: Nilai Poin (tiap baris)"
-                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all"></textarea>
-                            <p class="text-[10px] text-gray-400 mt-1">Gunakan enter untuk membuat lebih dari satu aturan.</p>
-                        </div>
-                        <div class="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
-                            <button type="button" onclick="toggleModal('modalTambahKategori')"
-                                class="px-5 py-2.5 text-gray-600 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl text-sm transition">Batal</button>
-                            <button type="submit"
-                                class="bg-gradient-to-r from-blue-600 to-primary-blue hover:from-blue-700 hover:to-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-blue-500/30 transition hover:-translate-y-0.5">Simpan Kategori</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
             <div id="modalInfoGenbi"
                 class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 sm:p-6 transition-all">
@@ -1157,41 +1073,6 @@
                                     @endforeach
                                 </ul>
                             </div>
-
-                            @if(isset($kategoriPoins) && $kategoriPoins->count() > 0)
-                                @foreach($kategoriPoins as $kp)
-                                    <div class="space-y-4">
-                                        <h4 class="text-blue-600 font-black uppercase text-xs tracking-widest flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> {{ $kp->nama_kategori }}
-                                        </h4>
-                                        <div class="bg-white border border-blue-100 rounded-2xl p-5 space-y-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                                            @php $aturanArray = explode("\n", str_replace("\r", "", $kp->aturan ?? "")); @endphp
-                                            @foreach ($aturanArray as $item)
-                                                @if (trim($item) != '')
-                                                    @php
-                                                        $parts = explode(':', $item);
-                                                        $name = $parts[0] ?? $item;
-                                                        $score = $parts[1] ?? '';
-                                                    @endphp
-                                                    <div class="flex justify-between items-center text-sm border-b border-blue-50 pb-3 gap-3">
-                                                        <span class="text-gray-600 leading-tight">{{ trim($name) }}</span>
-                                                        @if (trim($score) != '')
-                                                            @php
-                                                                preg_match('/-?\d+/', $score, $scoreMatches);
-                                                                $scoreVal = isset($scoreMatches[0]) ? $scoreMatches[0] : '';
-                                                            @endphp
-                                                            <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
-                                                                {{ strpos($scoreVal, '-') !== false ? '' : '+ ' }}{{ $scoreVal }} Poin
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @endif
-
                         </div>
                     </div>
                     <div
@@ -1278,8 +1159,13 @@
                                                 class="flex justify-between items-center text-sm border-b border-red-50 pb-3 gap-3">
                                                 <span class="text-gray-600 leading-tight">{{ trim($name) }}</span>
                                                 @if (trim($score) != '')
-                                                    <span
-                                                        class="bg-red-50 text-red-600 font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">{{ trim($score) }}</span>
+                                                    @php
+                                                        preg_match('/\d+/', $score, $scoreMatches);
+                                                        $scoreVal = isset($scoreMatches[0]) ? $scoreMatches[0] : '';
+                                                    @endphp
+                                                    <span class="bg-red-50 text-red-600 font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                                                        + {{ $scoreVal }} Poin
+                                                    </span>
                                                 @endif
                                             </div>
                                         @endif
@@ -1306,8 +1192,13 @@
                                                 class="flex justify-between items-center text-sm border-b border-blue-50 pb-3 gap-3">
                                                 <span class="text-gray-600 leading-tight">{{ trim($name) }}</span>
                                                 @if (trim($score) != '')
-                                                    <span
-                                                        class="bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">{{ trim($score) }}</span>
+                                                    @php
+                                                        preg_match('/\d+/', $score, $scoreMatches);
+                                                        $scoreVal = isset($scoreMatches[0]) ? $scoreMatches[0] : '';
+                                                    @endphp
+                                                    <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                                                        + {{ $scoreVal }} Poin
+                                                    </span>
                                                 @endif
                                             </div>
                                         @endif
@@ -1406,82 +1297,11 @@
                                     </div>
                                 </div>
                             </div>
-
-                            @if(isset($kategoriPoins) && $kategoriPoins->count() > 0)
-                                @php
-                                    $customColors = [
-                                        [
-                                            'text' => 'text-blue-600', 'bg_dot' => 'bg-blue-500', 'border_outer' => 'border-blue-100',
-                                            'border_inner' => 'border-blue-50', 'bg_badge' => 'bg-blue-50', 'text_badge' => 'text-blue-600',
-                                        ],
-                                        [
-                                            'text' => 'text-emerald-600', 'bg_dot' => 'bg-emerald-500', 'border_outer' => 'border-emerald-100',
-                                            'border_inner' => 'border-emerald-50', 'bg_badge' => 'bg-emerald-50', 'text_badge' => 'text-emerald-600',
-                                        ],
-                                        [
-                                            'text' => 'text-violet-600', 'bg_dot' => 'bg-violet-500', 'border_outer' => 'border-violet-100',
-                                            'border_inner' => 'border-violet-50', 'bg_badge' => 'bg-violet-50', 'text_badge' => 'text-violet-600',
-                                        ],
-                                        [
-                                            'text' => 'text-rose-600', 'bg_dot' => 'bg-rose-500', 'border_outer' => 'border-rose-100',
-                                            'border_inner' => 'border-rose-50', 'bg_badge' => 'bg-rose-50', 'text_badge' => 'text-rose-600',
-                                        ],
-                                        [
-                                            'text' => 'text-amber-600', 'bg_dot' => 'bg-amber-500', 'border_outer' => 'border-amber-100',
-                                            'border_inner' => 'border-amber-50', 'bg_badge' => 'bg-amber-50', 'text_badge' => 'text-amber-600',
-                                        ],
-                                        [
-                                            'text' => 'text-cyan-600', 'bg_dot' => 'bg-cyan-500', 'border_outer' => 'border-cyan-100',
-                                            'border_inner' => 'border-cyan-50', 'bg_badge' => 'bg-cyan-50', 'text_badge' => 'text-cyan-600',
-                                        ]
-                                    ];
-                                @endphp
-                                @foreach($kategoriPoins as $kp)
-                                    @php $palette = $customColors[$loop->index % count($customColors)]; @endphp
-                                    <div class="space-y-4" id="kategori_custom_{{ $kp->id }}">
-                                        <div class="flex items-center justify-between">
-                                            <h4 class="{{ $palette['text'] }} font-black uppercase text-xs tracking-widest flex items-center gap-2">
-                                                <span class="w-2 h-2 rounded-full {{ $palette['bg_dot'] }}"></span> {{ $kp->nama_kategori }}
-                                            </h4>
-                                        </div>
-                                        <div class="bg-white border {{ $palette['border_outer'] }} rounded-2xl p-5 space-y-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                                            @php $aturanArray = explode("\n", str_replace("\r", "", $kp->aturan ?? "")); @endphp
-                                            @foreach ($aturanArray as $item)
-                                                @if (trim($item) != '')
-                                                    @php
-                                                        $parts = explode(':', $item);
-                                                        $name = $parts[0] ?? $item;
-                                                        $score = $parts[1] ?? '';
-                                                    @endphp
-                                                    <div class="flex justify-between items-center text-sm border-b {{ $palette['border_inner'] }} pb-3 gap-3">
-                                                        <span class="text-gray-600 leading-tight">{{ trim($name) }}</span>
-                                                        @if (trim($score) != '')
-                                                            @php
-                                                                preg_match('/-?\d+/', $score, $scoreMatches);
-                                                                $scoreVal = isset($scoreMatches[0]) ? $scoreMatches[0] : '';
-                                                            @endphp
-                                                            <span class="{{ $palette['bg_badge'] }} {{ $palette['text_badge'] }} font-bold px-3 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
-                                                                {{ strpos($scoreVal, '-') !== false ? '' : '+ ' }}{{ $scoreVal }} Poin
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @endif
-
                         </div>
                     </div>
                     <div
                         class="p-4 bg-white border-t border-gray-100 flex justify-end gap-3 items-center z-20 flex-shrink-0 rounded-b-3xl">
                         @if (auth()->check() && in_array(auth()->user()->role, ['admin', 'sekretaris']))
-                            <button type="button" onclick="toggleModal('modalTambahKategori')"
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold transition text-sm shadow-sm hover:shadow-lg flex items-center gap-2"><svg
-                                    class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg> Tambah Kategori</button>
                             <button type="button" onclick="toggleModal('modalEditPoin')"
                                 class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl font-bold transition text-sm shadow-sm hover:shadow-lg flex items-center gap-2"><svg
                                     class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1838,7 +1658,7 @@
                         toggleModal('modalEditDevisi');
                     }
 
-                    // LOGIKA CAROUSEL GALERI DOKUMENTASI GLOBAL
+                    // LOGIKA CAROUSEL GALERI DOKUMENTASI
                     let carouselInterval;
 
                     function initCarouselSlider() {
@@ -1872,47 +1692,54 @@
                         if (popup) {
                             document.body.style.overflow = 'hidden';
                         }
+                        @if (session('open_poin_modal'))
+                            setTimeout(function() {
+                                if (typeof toggleModal === 'function') toggleModal('modalEditPoin');
+                            }, 300);
+                        @endif
                     });
 
-                    // 1 EVENT LISTENER SUBMIT UNTUK SEMUA FORM (MENGGUNAKAN AJAX/LATAR BELAKANG)
                     document.addEventListener('submit', function(e) {
                         if (e.target && e.target.id === 'formEditGenbi') {
                             e.preventDefault();
                             prosesSimpanInstan(e.target, 'modalEditGenbi', 'modalInfoGenbi');
-                        } else if (e.target && e.target.id === 'formEditPoin') {
-                            e.preventDefault();
-                            prosesSimpanInstan(e.target, 'modalEditPoin', 'modalInfoPoin');
                         } else if (e.target && e.target.id === 'formEditBeasiswa') {
                             e.preventDefault();
                             prosesSimpanInstan(e.target, 'modalEditBeasiswa', 'modalInfoBeasiswa');
+                        } else if (e.target && e.target.id === 'formEditPoin') { // Tambahan Poin
+                            e.preventDefault();
+                            prosesSimpanInstan(e.target, 'modalEditPoin', 'modalInfoPoin');
                         } else if (e.target && e.target.id === 'formHapusMasal') {
                             e.preventDefault();
                             prosesHapusMasalInstan(e.target);
-                        } else if (e.target && e.target.id === 'formTambahKategori') {
-                            e.preventDefault();
-                            prosesSimpanInstan(e.target, 'modalTambahKategori', 'modalInfoPoin');
                         }
                     });
 
-                    // FUNGSI UTAMA: PROSES HAPUS MASSAL TANPA REFRESH
+                    function syncAllBeforeSubmit(e, form) {
+                        if (typeof syncDynamicList === 'function') {
+                            syncDynamicList('pelanggaran');
+                            syncDynamicList('qris');
+                            syncDynamicList('apresiasi');
+                            syncDynamicList('sp');
+                        }
+                        return true;
+                    }
+
                     function prosesHapusMasalInstan(form) {
                         let btn = document.getElementById('btnHapusMasal');
                         let originalText = btn.innerHTML;
                         let count = document.querySelectorAll('input[name="filenames[]"]:checked').length;
-
                         if (!confirm('Apakah Anda yakin ingin menghapus ' + count + ' foto tersebut secara permanen?')) return;
 
                         btn.innerText = "Menghapus...";
                         btn.disabled = true;
-
                         let token = document.querySelector('input[name="_token"]');
-
                         fetch(form.action, {
                                 method: 'POST',
                                 body: new FormData(form),
                                 headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': token ? token.value : ''
+                                    'X-CSRF-TOKEN': token ? token.value : '',
+                                    'Accept': 'text/html'
                                 }
                             })
                             .then(response => {
@@ -1922,16 +1749,13 @@
                             .then(html => {
                                 const parser = new DOMParser();
                                 const doc = parser.parseFromString(html, 'text/html');
-
                                 document.getElementById('carouselGaleriDisplay').innerHTML = doc.getElementById(
                                     'carouselGaleriDisplay').innerHTML;
                                 document.getElementById('gridFotoKelola').innerHTML = doc.getElementById('gridFotoKelola')
-                                    .innerHTML;
-
+                                .innerHTML;
                                 document.getElementById('terpilihCount').innerText = "0";
                                 btn.innerHTML = originalText;
                                 btn.disabled = true;
-
                                 tampilkanToastHapus(count);
                                 initCarouselSlider();
                             })
@@ -1942,35 +1766,37 @@
                             });
                     }
 
-                    // FUNGSI SIMPAN INFO & ATURAN POIN INSTAN (MENCEGAH REFRESH HALAMAN)
+                    // ========================================================
+                    // KUNCI PERBAIKAN 1: PAKSA LARAVEL MENGIRIM HTML UTUH
+                    // ========================================================
                     function prosesSimpanInstan(form, idModalEdit, idModalInfo) {
                         let btn = form.querySelector('button[type="submit"]');
                         let originalText = btn.innerText;
                         btn.innerText = "Menyimpan...";
                         btn.disabled = true;
 
-                        // Pastikan Dynamic List disinkronkan ke Textarea sebelum di-submit
-                        if (form.id === 'formEditBeasiswa' && typeof syncDynamicList === 'function') {
-                            syncDynamicList('kriteria');
-                            syncDynamicList('dokumen');
-                        }
-                        
-                        if (form.id === 'formEditPoin' && typeof syncDynamicList === 'function') {
-                            ['pelanggaran', 'qris', 'apresiasi', 'sp'].forEach(type => {
-                                if (document.getElementById('hidden_' + type)) syncDynamicList(type);
-                            });
-                            document.querySelectorAll('[id^="hidden_custom_"]').forEach(el => {
-                                syncDynamicList(el.id.replace('hidden_', ''));
-                            });
+                        if (typeof syncDynamicList === 'function') {
+                            if (form.id === 'formEditBeasiswa') {
+                                syncDynamicList('kriteria');
+                                syncDynamicList('dokumen');
+                            }
+                            if (form.id === 'formEditPoin') {
+                                syncDynamicList('pelanggaran');
+                                syncDynamicList('qris');
+                                syncDynamicList('apresiasi');
+                                syncDynamicList('sp');
+                            }
                         }
 
                         let token = document.querySelector('input[name="_token"]');
 
+                        // Header Accept di bawah ini memastikan Laravel membalas dengan HTML, bukan JSON!
                         fetch(form.action, {
                                 method: 'POST',
                                 body: new FormData(form),
                                 headers: {
-                                    'X-CSRF-TOKEN': token ? token.value : ''
+                                    'X-CSRF-TOKEN': token ? token.value : '',
+                                    'Accept': 'text/html, application/xhtml+xml'
                                 }
                             })
                             .then(response => {
@@ -1984,59 +1810,33 @@
                                 const editModal = document.getElementById(idModalEdit);
                                 const infoModal = document.getElementById(idModalInfo);
 
-                                // Tutup modal edit, buka modal info
+                                const targetInfoContent = infoModal.querySelector('.animate-modal');
+                                const newInfoModal = doc.getElementById(idModalInfo);
+                                if (targetInfoContent && newInfoModal) {
+                                    const newInfoContent = newInfoModal.querySelector('.animate-modal');
+                                    if (newInfoContent) targetInfoContent.innerHTML = newInfoContent.innerHTML;
+                                }
+
+                                const targetEditContent = editModal.querySelector('.animate-modal');
+                                const newEditModal = doc.getElementById(idModalEdit);
+                                if (targetEditContent && newEditModal) {
+                                    const newEditContent = newEditModal.querySelector('.animate-modal');
+                                    if (newEditContent) targetEditContent.innerHTML = newEditContent.innerHTML;
+                                }
+
                                 editModal.classList.add('hidden');
                                 editModal.classList.remove('flex');
                                 infoModal.classList.remove('hidden');
                                 infoModal.classList.add('flex');
-
-                                const modalsToUpdate = ['modalInfoGenbi', 'modalEditGenbi', 'modalInfoPoin', 'modalEditPoin', 'modalInfoBeasiswa', 'modalEditBeasiswa'];
-                                modalsToUpdate.forEach(modalId => {
-                                    const currentModal = document.getElementById(modalId);
-                                    const newModalContent = doc.getElementById(modalId)?.querySelector('.animate-modal');
-                                    if (currentModal && newModalContent) {
-                                        const currentContent = currentModal.querySelector('.animate-modal');
-                                        if (currentContent) {
-                                            currentContent.style.animation = 'none';
-                                            currentContent.innerHTML = newModalContent.innerHTML;
-                                        }
-                                    }
-                                });
-                                // Update JSON data block dari response server
-                                const newJsonScript = doc.getElementById('kategoriPoinInitData');
-                                const oldJsonScript = document.getElementById('kategoriPoinInitData');
-                                if (newJsonScript && oldJsonScript) {
-                                    oldJsonScript.textContent = newJsonScript.textContent;
-                                }
-                                
-                                // Setelah innerHTML replacement, textarea value bisa hilang.
-                                // Pulihkan dari data-init attribute yang di-set oleh server.
-                                document.querySelectorAll('#modalEditPoin textarea[data-init]').forEach(ta => {
-                                    if (!ta.value || ta.value.trim() === '') {
-                                        let initVal = ta.getAttribute('data-init');
-                                        if (initVal) {
-                                            ta.value = initVal;
-                                        }
-                                    }
-                                });
-                                
-                                // Selalu inisialisasi ulang list dinamis setelah konten modalEditPoin di-replace
-                                if (document.getElementById('modalEditPoin')) {
-                                    ['pelanggaran', 'qris', 'apresiasi', 'sp'].forEach(type => {
-                                        if(document.getElementById('hidden_' + type)) initDynamicList(type);
-                                    });
-                                }
-
                                 document.body.style.overflow = 'hidden';
 
-                                // Tampilkan notifikasi sukses
                                 tampilkanToastSukses();
-
                                 btn.innerText = originalText;
                                 btn.disabled = false;
                             })
                             .catch(error => {
-                                alert("Kesalahan koneksi saat menyimpan data!");
+                                console.error('Simpan error:', error);
+                                alert("Terjadi kesalahan! Pastikan koneksi internet stabil.");
                                 btn.innerText = originalText;
                                 btn.disabled = false;
                             });
@@ -2045,16 +1845,9 @@
                     function tampilkanToastHapus(jumlah) {
                         let existingToast = document.getElementById('toast-ajax');
                         if (existingToast) existingToast.remove();
-
                         let div = document.createElement('div');
-                        div.innerHTML = `
-            <div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-red-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500">
-                <div class="bg-red-100 text-red-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div>
-                <div>
-                    <p class="text-sm font-black text-gray-800">Foto Berhasil Dihapus!</p>
-                    <p class="text-xs text-gray-500 font-medium mt-0.5">${jumlah} foto telah dihapus dari galeri.</p>
-                </div>
-            </div>`;
+                        div.innerHTML =
+                            `<div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-red-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500"><div class="bg-red-100 text-red-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div><div><p class="text-sm font-black text-gray-800">Foto Berhasil Dihapus!</p><p class="text-xs text-gray-500 font-medium mt-0.5">${jumlah} foto telah dihapus dari galeri.</p></div></div>`;
                         document.body.appendChild(div.firstElementChild);
                         setTimeout(() => {
                             let t = document.getElementById('toast-ajax');
@@ -2068,15 +1861,9 @@
                     function tampilkanToastSukses() {
                         let existingToast = document.getElementById('toast-ajax');
                         if (existingToast) existingToast.remove();
-
                         let div = document.createElement('div');
-                        div.innerHTML = `
-            <div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-emerald-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500">
-                <div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
-                <div>
-                    <p class="text-sm font-black text-gray-800">Berhasil Disimpan!</p>
-                </div>
-            </div>`;
+                        div.innerHTML =
+                            `<div id="toast-ajax" class="fixed top-5 right-5 z-[100] p-4 bg-white border-l-4 border-emerald-500 rounded-xl shadow-2xl flex items-center gap-4 transition-opacity duration-500"><div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div><div><p class="text-sm font-black text-gray-800">Berhasil Disimpan!</p></div></div>`;
                         document.body.appendChild(div.firstElementChild);
                         setTimeout(() => {
                             let t = document.getElementById('toast-ajax');
@@ -2087,82 +1874,12 @@
                         }, 3000);
                     }
 
-                    function toggleModal(modalID) {
-                        const modal = document.getElementById(modalID);
-                        if (modal) {
-                            if (modal.classList.contains('hidden')) {
-                                document.body.style.overflow = 'hidden';
-                                modal.classList.remove('hidden');
-                                modal.classList.add('flex');
-
-                                // Trigger Render Kotak Dinamis jika modal edit beasiswa dibuka
-                                if (modalID === 'modalEditBeasiswa' && document.getElementById('hidden_kriteria')) {
-                                    initDynamicList('kriteria');
-                                    initDynamicList('dokumen');
-                                }
-                                
-                                // Trigger Render Kotak Dinamis jika modal edit poin dibuka
-                                if (modalID === 'modalEditPoin') {
-                                    // Pulihkan value textarea dari data-init jika kosong
-                                    document.querySelectorAll('#modalEditPoin textarea[data-init]').forEach(ta => {
-                                        if (!ta.value || ta.value.trim() === '') {
-                                            let initVal = ta.getAttribute('data-init');
-                                            if (initVal) {
-                                                ta.value = initVal;
-                                            }
-                                        }
-                                    });
-                                    ['pelanggaran', 'qris', 'apresiasi', 'sp'].forEach(type => {
-                                        if(document.getElementById('hidden_' + type)) initDynamicList(type);
-                                    });
-                                }
-                            } else {
-                                document.body.style.overflow = 'auto';
-                                modal.classList.add('hidden');
-                                modal.classList.remove('flex');
-                            }
-                        }
-                    }
-
                     function updateHapusButton() {
                         const checkboxes = document.querySelectorAll('input[name="filenames[]"]:checked');
-                        const count = checkboxes.length;
                         const btn = document.getElementById('btnHapusMasal');
-
-                        if (document.getElementById('terpilihCount')) document.getElementById('terpilihCount').innerText = count;
-                        if (btn) btn.disabled = count === 0;
-                    }
-
-                    function hapusKategoriPoinAjax(id, btn, nama) {
-                        if(!confirm('Apakah Anda yakin ingin menghapus kategori ' + nama + '?')) return;
-                        let originalText = btn.innerText;
-                        btn.innerText = '...';
-                        btn.disabled = true;
-                        let token = document.querySelector('input[name="_token"]');
-                        fetch('/dashboard/kategori-poin/' + id, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': token ? token.value : '',
-                                'Accept': 'application/json'
-                            }
-                        }).then(r => r.json()).then(data => {
-                            if(data.success) {
-                                btn.closest('.bg-white').remove();
-                                let hiddenInput = document.getElementById('hidden_custom_' + id);
-                                if(hiddenInput) hiddenInput.remove();
-                                let infoBox = document.getElementById('kategori_custom_' + id);
-                                if(infoBox) infoBox.remove();
-                                tampilkanToastSukses();
-                            } else {
-                                alert('Gagal menghapus kategori.');
-                                btn.innerText = originalText;
-                                btn.disabled = false;
-                            }
-                        }).catch(e => {
-                            alert('Gagal koneksi.');
-                            btn.innerText = originalText;
-                            btn.disabled = false;
-                        });
+                        if (document.getElementById('terpilihCount')) document.getElementById('terpilihCount').innerText = checkboxes
+                            .length;
+                        if (btn) btn.disabled = checkboxes.length === 0;
                     }
 
                     function tutupPopupAgenda() {
@@ -2176,108 +1893,104 @@
                         }
                     }
 
-                    // ==========================================
-                    // DYNAMIC LIST BUILDER UNTUK BEASISWA
-                    // ==========================================
-                    function _getKategoriPoinData() {
-                        try {
-                            const scriptEl = document.getElementById('kategoriPoinInitData');
-                            if (scriptEl) return JSON.parse(scriptEl.textContent);
-                        } catch(e) {}
-                        return {};
-                    }
-
+                    // ========================================================
+                    // KUNCI PERBAIKAN 2: BACA LANGSUNG DARI VALUE, JANGAN DATASET
+                    // ========================================================
                     function initDynamicList(type) {
                         try {
                             const hiddenInput = document.getElementById('hidden_' + type);
                             const container = document.getElementById('container_' + type);
-                            if (!container) return;
-                            
-                            let val = '';
-                            if (hiddenInput) {
-                                val = hiddenInput.value || hiddenInput.textContent || hiddenInput.getAttribute('data-init') || '';
-                                // Jika val masih mengandung literal &#10;, ubah menjadi newline sungguhan
-                                val = val.replace(/&#10;/g, '\n');
-                            }
-                            
-                            // Jika ini form kategori custom dan datanya masih kosong, coba ekstrak dari DOM fallback
-                            if (!val && type.startsWith('custom_')) {
-                                try {
-                                    const id = type.replace('custom_', '');
-                                    const scriptEl = document.getElementById('kategoriPoinInitData');
-                                    if (scriptEl) {
-                                        const serverData = JSON.parse(scriptEl.textContent);
-                                        if (serverData[id]) val = serverData[id];
-                                    }
-                                } catch(e) {}
-                            }
-                            
+                            if (!hiddenInput || !container) return;
+
                             container.innerHTML = '';
-                            let added = 0;
-                            
-                            if (val && val.trim() !== '') {
-                                const items = val.split('\n');
-                                items.forEach(item => {
-                                    if (item.trim() !== '') {
-                                        addDynamicItem(type, item.trim());
-                                        added++;
-                                    }
-                                });
+
+                            // Gunakan properti .value langsung agar kotak mengambil data terbaru dari database
+                            let rawValue = (hiddenInput.value || hiddenInput.textContent || '').trim();
+                            rawValue = rawValue.replace(/&#10;/g, '\n');
+
+                            const items = rawValue.split(/\r?\n/);
+                            let hasValidItem = false;
+
+                            items.forEach(item => {
+                                const trimmed = item.trim();
+                                if (trimmed !== '') {
+                                    addDynamicItem(type, trimmed, true);
+                                    hasValidItem = true;
+                                }
+                            });
+
+                            if (!hasValidItem) {
+                                addDynamicItem(type, '', true);
                             }
-                            
-                            if (added === 0) {
-                                addDynamicItem(type, '');
+
+                            syncDynamicList(type);
+                        } catch (e) {
+                            console.error('Error initDynamicList:', e);
+                        }
+                    }
+
+                    function addDynamicItem(type, value = '', skipSync = false) {
+                        try {
+                            const container = document.getElementById('container_' + type);
+                            if (!container) return;
+
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'flex items-start gap-2.5 group animate-fade-in-down';
+                            itemDiv.innerHTML = `
+                    <div class="mt-1 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-400 font-black text-xs flex-shrink-0 item-number transition-colors group-focus-within:bg-blue-100 group-focus-within:text-blue-600 border border-transparent group-focus-within:border-blue-200"></div>
+                    <textarea rows="2" class="flex-1 border border-gray-200 hover:border-blue-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm text-gray-700 font-medium bg-white" placeholder="Ketik rincian di sini..." oninput="syncDynamicList('${type}')"></textarea>
+                    <button type="button" onclick="hapusDynamicItem(this, '${type}')" class="mt-1 w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 shadow-sm border border-red-100 hover:border-transparent" title="Hapus Poin">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+
+                            const textarea = itemDiv.querySelector('textarea');
+                            if (textarea) textarea.value = value;
+
+                            container.appendChild(itemDiv);
+
+                            if (!skipSync) syncDynamicList(type);
+                            if (value === '' && textarea) textarea.focus();
+                        } catch (e) {
+                            console.error('Error addDynamicItem:', e);
+                        }
+                    }
+
+                    function hapusDynamicItem(button, type) {
+                        try {
+                            const itemDiv = button.closest('.group');
+                            if (itemDiv) {
+                                itemDiv.remove();
+                                syncDynamicList(type);
                             }
                         } catch (e) {
-                            try { addDynamicItem(type, ''); } catch(e2) {}
+                            console.error('Error hapusDynamicItem:', e);
                         }
-                    }
-
-                    function addDynamicItem(type, value = '') {
-                        const container = document.getElementById('container_' + type);
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'flex items-start gap-2.5 group animate-fade-in-down';
-
-                        itemDiv.innerHTML = `
-                <div class="mt-1 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-400 font-black text-xs flex-shrink-0 item-number transition-colors group-focus-within:bg-blue-100 group-focus-within:text-blue-600 border border-transparent group-focus-within:border-blue-200"></div>
-                <textarea rows="2" class="flex-1 border border-gray-200 hover:border-blue-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none shadow-sm text-gray-700 font-medium bg-white" placeholder="Ketik rincian di sini..." oninput="syncDynamicList('${type}')">${value}</textarea>
-                <button type="button" onclick="hapusDynamicItem(this, '${type}')" class="mt-1 w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex-shrink-0 shadow-sm border border-red-100 hover:border-transparent" title="Hapus Poin">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-            `;
-
-                        container.appendChild(itemDiv);
-                        syncDynamicList(type);
-
-                        if (value === '') {
-                            const textarea = itemDiv.querySelector('textarea');
-                            textarea.focus();
-                            textarea.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center'
-                            });
-                        }
-                    }
-
-                    function hapusDynamicItem(btnElement, type) {
-                        btnElement.parentElement.remove();
-                        syncDynamicList(type);
                     }
 
                     function syncDynamicList(type) {
-                        const container = document.getElementById('container_' + type);
-                        const textareas = container.querySelectorAll('textarea');
-                        const numbers = container.querySelectorAll('.item-number');
+                        try {
+                            const container = document.getElementById('container_' + type);
+                            if (!container) return;
 
-                        let values = [];
-                        textareas.forEach((ta, index) => {
-                            if (numbers[index]) numbers[index].innerText = index + 1;
-                            if (ta.value.trim() !== '') {
-                                values.push(ta.value.trim());
+                            const textareas = container.querySelectorAll('textarea');
+                            const numbers = container.querySelectorAll('.item-number');
+                            let values = [];
+
+                            Array.from(textareas).forEach((ta, index) => {
+                                if (numbers[index]) numbers[index].innerText = index + 1;
+                                if (ta.value.trim() !== '') {
+                                    values.push(ta.value.trim());
+                                }
+                            });
+
+                            const hiddenInput = document.getElementById('hidden_' + type);
+                            if (hiddenInput) {
+                                hiddenInput.value = values.join('\n');
                             }
-                        });
-
-                        document.getElementById('hidden_' + type).value = values.join('\n');
+                        } catch (e) {
+                            console.error('Error syncDynamicList:', e);
+                        }
                     }
                 </script>
             @endsection

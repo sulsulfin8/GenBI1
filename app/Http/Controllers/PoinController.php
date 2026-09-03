@@ -62,6 +62,40 @@ class PoinController extends Controller
 
         $rekapData = [];
         $kegiatanAktif = Kegiatan::pluck('nama_kegiatan');
+        $sp1Min = 25;
+        $sp2Min = 50;
+        $sp3Min = 100;
+
+        if ($info && !empty($info->sp)) {
+            $spLines = explode("\n", str_replace("\r", "", $info->sp));
+            foreach ($spLines as $line) {
+                if (trim($line) != '') {
+                    $parts = explode(':', $line);
+                    if (count($parts) == 2) {
+                        $label = strtolower(trim($parts[0]));
+                        $valStr = $parts[1];
+                        preg_match_all('/\d+/', $valStr, $matches);
+                        if (!empty($matches[0])) {
+                            $min = min(array_map('intval', $matches[0]));
+                            if (strpos($valStr, '>') !== false) {
+                                $min += 1;
+                            }
+                            
+                            if (preg_match('/sp\s*1/i', $label)) $sp1Min = $min;
+                            elseif (preg_match('/sp\s*2/i', $label)) $sp2Min = $min;
+                            elseif (preg_match('/sp\s*3/i', $label)) $sp3Min = $min;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pastikan logika SP masuk akal, kalau error input kembali ke default
+        if ($sp1Min >= $sp2Min || $sp2Min >= $sp3Min) {
+            $sp1Min = 25;
+            $sp2Min = 50;
+            $sp3Min = 100;
+        }
 
         foreach ($users as $user) {
             if (empty($user->nim)) continue;
@@ -79,9 +113,14 @@ class PoinController extends Controller
             $grandTotal = max(0, $poinAbsensi + $poinManual);
 
             $sp = 'Aman';
-            if ($grandTotal >= 25 && $grandTotal < 50) $sp = 'SP 1';
-            elseif ($grandTotal >= 50 && $grandTotal <= 100) $sp = 'SP 2';
-            elseif ($grandTotal > 100) $sp = 'SP 3';
+            if ($grandTotal >= $sp3Min) {
+                $sp = 'SP 3';
+            } elseif ($grandTotal >= $sp2Min) {
+                $sp = 'SP 2';
+            } elseif ($grandTotal >= $sp1Min) {
+                $sp = 'SP 1';
+            }
+            
             $poinRecord->update(['sp' => $sp]);
 
             $teksManual = ($poinRecord->keterangan && $poinRecord->keterangan != '-') ? $poinRecord->keterangan : "";
@@ -131,11 +170,13 @@ class PoinController extends Controller
                 'poin_manual' => $poinManual,
                 'total_poin' => $grandTotal,
                 'sp' => $sp,
-                'keterangan' => $keteranganAkhir
+                'keterangan' => $keteranganAkhir,
+                'keterangan_asli' => $poinRecord->keterangan ?? '-'
             ];
         }
 
-        return view('poin.index', compact('rekapData', 'info'));
+        $kategoriPoins = \App\Models\KategoriPoin::all();
+        return view('poin.index', compact('rekapData', 'info', 'kategoriPoins'));
     }
 
     public function updatePoin(Request $request)
@@ -227,12 +268,41 @@ class PoinController extends Controller
         // Hitung total poin baru = Poin Absensi + Poin Pelanggaran - Poin Apresiasi
         $poin->total_poin = $poin->poin_absensi + $totalPelanggaranManual - $totalApresiasiManual;
 
+        // Ambil threshold SP dari info
+        $info = \App\Models\Info::first();
+        $sp1Threshold = 25;
+        $sp2Threshold = 50;
+
+        if ($info && !empty($info->sp)) {
+            $spLines = explode("\n", str_replace("\r", "", $info->sp));
+            foreach ($spLines as $line) {
+                if (trim($line) != '') {
+                    $parts = explode(':', $line);
+                    if (count($parts) == 2) {
+                        $label = strtolower(trim($parts[0]));
+                        preg_match('/\d+/', $parts[1], $matches);
+                        $val = isset($matches[0]) ? (int)$matches[0] : null;
+                        if ($val !== null) {
+                            if (preg_match('/sp\s*1/i', $label)) $sp1Threshold = $val;
+                            elseif (preg_match('/sp\s*2/i', $label)) $sp2Threshold = $val;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pastikan logika SP masuk akal, kalau error input kembali ke default
+        if ($sp1Threshold >= $sp2Threshold || $sp2Threshold == 0) {
+            $sp1Threshold = 25;
+            $sp2Threshold = 50;
+        }
+
         // Hitung ulang status ambang batas Surat Peringatan (SP)
-        if ($poin->total_poin > 50) {
+        if ($poin->total_poin > $sp2Threshold) {
             $poin->sp = 'SP 3';
-        } elseif ($poin->total_poin == 50) {
+        } elseif ($poin->total_poin > $sp1Threshold && $poin->total_poin <= $sp2Threshold) {
             $poin->sp = 'SP 2';
-        } elseif ($poin->total_poin >= 25) {
+        } elseif ($poin->total_poin == $sp1Threshold) {
             $poin->sp = 'SP 1';
         } else {
             $poin->sp = 'Aman';

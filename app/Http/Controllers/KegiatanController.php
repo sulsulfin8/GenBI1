@@ -19,6 +19,16 @@ class KegiatanController extends Controller
             $query->where('devisi', $request->devisi);
         }
 
+        // Logika Filter Bulan
+        if ($request->has('bulan') && $request->bulan != '') {
+            $query->whereMonth('tanggal', $request->bulan);
+        }
+
+        // Logika Filter Tahun
+        if ($request->has('tahun') && $request->tahun != '') {
+            $query->whereYear('tanggal', $request->tahun);
+        }
+
         // 2. Logika Pencarian (Search / Live Search)
         if ($request->has('search') && $request->search != '') {
             $keyword = $request->search;

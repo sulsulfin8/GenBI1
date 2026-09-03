@@ -308,7 +308,7 @@
                                             </button>
 
                                             <button type="button"
-                                                onclick="bukaModalBatalPoin('{{ $data->nim }}', '{{ addslashes($data->nama) }}', '{{ addslashes($data->keterangan ?? '-') }}')"
+                                                onclick="bukaModalBatalPoin('{{ $data->nim }}', '{{ addslashes($data->nama) }}', '{{ addslashes($data->keterangan_asli ?? '-') }}')"
                                                 title="Batalkan Poin"
                                                 class="flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-md shadow-red-500/30 transition-transform hover:-translate-y-0.5">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -555,6 +555,27 @@
                                             @endif
                                         @endforeach
                                     </optgroup>
+
+                                    @if(isset($kategoriPoins) && $kategoriPoins->count() > 0)
+                                        @foreach($kategoriPoins as $kp)
+                                            <optgroup label="  {{ $kp->nama_kategori }}">
+                                                @php $customArr = explode("\n", str_replace("\r", "", $kp->aturan ?? "")); @endphp
+                                                @foreach ($customArr as $c)
+                                                    @if (trim($c) != '')
+                                                        @php
+                                                            $split = explode(':', $c);
+                                                            $label = trim($split[0]);
+                                                            preg_match('/-?\s*\d+/', $split[1] ?? '', $matches);
+                                                            // We default to addition unless minus is explicitly provided
+                                                            $val = isset($matches[0]) ? (int) str_replace(' ', '', $matches[0]) : 0;
+                                                        @endphp
+                                                        <option value="{{ $val }}|{{ $label }}">
+                                                            {{ $label }} ({{ $val > 0 ? '+' . $val : $val }} Poin)</option>
+                                                    @endif
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -759,13 +780,15 @@
                         container.innerHTML = `
                             <div class="text-[11px] font-bold text-amber-700 bg-amber-50 px-3 py-2.5 rounded-xl mb-3 border border-amber-200 flex items-start gap-2">
                                 <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span>Menampilkan <b>${itemDitampilkan.length} aktivitas terbaru</b>.</span>
+                                <span>Menampilkan <b>${itemDitampilkan.length} dari maksimal 5</b> aktivitas terbaru.</span>
                             </div>
                         `;
 
                         // Render item-item tersebut
                         itemDitampilkan.forEach((itemObj) => {
                             let isPlus = itemObj.text.includes('+');
+                            // Percantik teks: hapus "=" dan ganti jadi format kurung
+                            let cleanText = itemObj.text.replace(/\s*=\s*([+-]?\s*\d+\s*poin)/ig, " ($1)");
                             let divItem = document.createElement('div');
                             divItem.className =
                                 "flex items-center justify-between p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-red-300 transition-all gap-3 mb-2.5";
@@ -773,7 +796,7 @@
                             divItem.innerHTML = `
                                 <div class="flex items-center gap-2 max-w-[70%]">
                                     <span class="w-2 h-2 rounded-full ${isPlus ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'} flex-shrink-0"></span>
-                                    <span class="text-xs font-bold text-gray-700 leading-relaxed">${itemObj.text}</span>
+                                    <span class="text-xs font-bold text-gray-700 leading-relaxed">${cleanText}</span>
                                 </div>
                                 <button type="button" onclick="hapusItemPoinAjax('${nim}', '${nama}', ${itemObj.originalIndex})" class="px-3 py-1.5 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white rounded-xl text-[11px] font-black transition-all shadow-sm">
                                     Batal

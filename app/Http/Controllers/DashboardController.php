@@ -9,6 +9,7 @@ use App\Models\Anggaran;
 use Illuminate\Support\Facades\File;
 use App\Models\Info;
 use App\Models\Devisi;
+use App\Models\KategoriPoin;
 
 class DashboardController extends Controller
 {
@@ -81,6 +82,8 @@ class DashboardController extends Controller
             $daftarDevisi = Devisi::all();
         }
 
+        $kategoriPoins = KategoriPoin::all();
+
         return view('dashboard.index', compact(
             'info',
             'galeri',
@@ -95,7 +98,8 @@ class DashboardController extends Controller
             'anggotaDevisi',
             'agendaTerdekat',
             'tampilkanPopup',
-            'daftarDevisi'
+            'daftarDevisi',
+            'kategoriPoins'
         ));
     }
 
@@ -113,6 +117,10 @@ class DashboardController extends Controller
 
         $info->save();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return redirect()->back();
     }
 
@@ -129,7 +137,17 @@ class DashboardController extends Controller
 
         $info->save();
 
-        return redirect()->back();
+        if ($request->has('kategori_custom')) {
+            foreach ($request->kategori_custom as $id => $aturan) {
+                $kp = \App\Models\KategoriPoin::find($id);
+                if ($kp) {
+                    $kp->aturan = $aturan;
+                    $kp->save();
+                }
+            }
+        }
+
+        return redirect()->back()->with('open_poin_modal', true);
     }
 
     public function uploadDokumentasi(Request $request)
@@ -203,5 +221,35 @@ class DashboardController extends Controller
     {
         Devisi::findOrFail($id)->delete();
         return redirect()->back()->with('success', 'Divisi berhasil dihapus!');
+    }
+
+    public function storeKategoriPoin(Request $request)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255',
+            'aturan' => 'nullable|string',
+        ]);
+        KategoriPoin::create($request->all());
+        return redirect()->back()->with('open_info_poin_modal', true)->with('success', 'Kategori poin baru berhasil ditambahkan!');
+    }
+
+    public function updateKategoriPoin(Request $request, $id)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255',
+            'aturan' => 'nullable|string',
+        ]);
+        $kategori = KategoriPoin::findOrFail($id);
+        $kategori->update($request->all());
+        return redirect()->back()->with('open_info_poin_modal', true)->with('success', 'Data kategori poin berhasil diperbarui!');
+    }
+
+    public function destroyKategoriPoin(Request $request, $id)
+    {
+        KategoriPoin::findOrFail($id)->delete();
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus.']);
+        }
+        return redirect()->back()->with('open_info_poin_modal', true)->with('success', 'Kategori poin berhasil dihapus!');
     }
 }

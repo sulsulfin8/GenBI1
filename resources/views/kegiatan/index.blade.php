@@ -20,66 +20,132 @@
 
     <div class="bg-white rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 relative z-20">
 
-        <div class="flex flex-col lg:flex-row justify-between items-center mb-6 text-sm text-gray-600 gap-4">
-
-            <form action="{{ route('kegiatan') }}" method="GET" class="flex items-center gap-2">
-                @if (request('search'))
-                    <input type="hidden" name="search" value="{{ request('search') }}">
-                @endif
-                @if (request('devisi'))
-                    <input type="hidden" name="devisi" value="{{ request('devisi') }}">
-                @endif
-
-                <span class="font-medium">Tampilkan</span>
-                <select name="per_page" onchange="this.form.submit()"
-                    class="border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 bg-gray-50 hover:bg-white transition font-bold text-gray-700 cursor-pointer">
-                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                </select>
-                <span class="font-medium">entri</span>
-            </form>
-
-            <div class="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto">
-                <form action="{{ route('kegiatan') }}" method="GET"
-                    class="flex flex-col md:flex-row items-center gap-3 w-full" id="searchForm">
-                    @if (request('per_page'))
-                        <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+        <!-- Header & Filters Area -->
+        <div class="flex flex-col gap-5 mb-8">
+            
+            <!-- Top Section: Show Entries & Add Button -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <form action="{{ route('kegiatan') }}" method="GET" class="flex items-center gap-2 bg-gray-50/80 px-4 py-2 rounded-xl border border-gray-100">
+                    @if (request('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                    @endif
+                    @if (request('devisi'))
+                        <input type="hidden" name="devisi" value="{{ request('devisi') }}">
+                    @endif
+                    @if (request('bulan'))
+                        <input type="hidden" name="bulan" value="{{ request('bulan') }}">
+                    @endif
+                    @if (request('tahun'))
+                        <input type="hidden" name="tahun" value="{{ request('tahun') }}">
                     @endif
 
-                    <select name="devisi" onchange="this.form.submit()"
-                        class="w-full md:w-auto border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 bg-gray-50 hover:bg-white transition font-bold text-gray-700 cursor-pointer">
-                        <option value="">-- Semua Devisi --</option>
-                        <option value="Semua Devisi" {{ request('devisi') == 'Semua Devisi' ? 'selected' : '' }}>Semua
-                            Devisi (Kegiatan Bersama)</option>
-                        @foreach ($devisis as $dev)
-                            @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
-                            <option value="{{ $dev->nama_devisi }}"
-                                {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
-                            </option>
-                        @endforeach
+                    <span class="text-sm font-semibold text-gray-500">Tampilkan</span>
+                    <select name="per_page" onchange="this.form.submit()"
+                        class="bg-transparent border-none focus:ring-0 text-sm font-bold text-primary-blue cursor-pointer p-0 pr-6">
+                        <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                     </select>
+                    <span class="text-sm font-semibold text-gray-500">entri</span>
+                </form>
 
-                    <div class="relative w-full md:w-64">
-                        <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
-                            placeholder="Cari kegiatan..." oninput="handleSearch(this)"
-                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 pl-10 focus:outline-none focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 text-sm bg-gray-50 focus:bg-white transition-all">
-                        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none"
+                <button onclick="toggleModal('modalTambahKegiatan')"
+                    class="w-full sm:w-auto bg-gradient-to-r from-primary-blue to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-[0_4px_12px_rgb(29,78,216,0.25)] flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Tambah Kegiatan</span>
+                </button>
+            </div>
+
+            <!-- Filter Bar -->
+            <form action="{{ route('kegiatan') }}" method="GET" id="searchForm"
+                class="bg-gray-50/60 p-2.5 rounded-2xl border border-gray-100 flex flex-col xl:flex-row gap-3 items-center w-full shadow-sm">
+                @if (request('per_page'))
+                    <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+                @endif
+                
+                <!-- Search Box -->
+                <div class="relative w-full xl:flex-1 group animate-fade-in-down" style="animation-delay: 0.1s; animation-fill-mode: both;">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                        <svg class="w-5 h-5 text-gray-400 group-focus-within:text-primary-blue group-focus-within:scale-110 transition-all duration-300" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                </form>
+                    <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
+                        placeholder="Cari nama kegiatan atau lokasi..." oninput="handleSearch(this)"
+                        class="w-full border border-transparent rounded-xl px-4 py-3 pl-12 focus:outline-none focus:border-primary-blue/30 focus:ring-4 focus:ring-primary-blue/10 text-sm bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-medium text-gray-800 placeholder-gray-400 relative z-0">
+                </div>
 
-                <button onclick="toggleModal('modalTambahKegiatan')"
-                    class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-primary-blue hover:from-blue-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-500/30 flex items-center justify-center gap-2 hover:-translate-y-0.5 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Tambah Kegiatan
-                </button>
-            </div>
+                <div class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                    <!-- Dropdown Bulan -->
+                    <div class="relative w-full sm:w-44 group animate-fade-in-down" style="animation-delay: 0.15s; animation-fill-mode: both;">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none z-10">
+                            <svg class="w-4.5 h-4.5 text-gray-400 group-focus-within:text-primary-blue group-focus-within:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <select name="bulan" onchange="this.form.submit()"
+                            class="w-full border border-transparent rounded-xl pl-10 pr-8 py-3 focus:outline-none focus:border-primary-blue/30 focus:ring-4 focus:ring-primary-blue/10 text-sm bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-bold text-gray-800 cursor-pointer appearance-none relative z-0">
+                            <option value="">Semua Bulan</option>
+                            <option value="1" {{ request('bulan') == '1' ? 'selected' : '' }}>Januari</option>
+                            <option value="2" {{ request('bulan') == '2' ? 'selected' : '' }}>Februari</option>
+                            <option value="3" {{ request('bulan') == '3' ? 'selected' : '' }}>Maret</option>
+                            <option value="4" {{ request('bulan') == '4' ? 'selected' : '' }}>April</option>
+                            <option value="5" {{ request('bulan') == '5' ? 'selected' : '' }}>Mei</option>
+                            <option value="6" {{ request('bulan') == '6' ? 'selected' : '' }}>Juni</option>
+                            <option value="7" {{ request('bulan') == '7' ? 'selected' : '' }}>Juli</option>
+                            <option value="8" {{ request('bulan') == '8' ? 'selected' : '' }}>Agustus</option>
+                            <option value="9" {{ request('bulan') == '9' ? 'selected' : '' }}>September</option>
+                            <option value="10" {{ request('bulan') == '10' ? 'selected' : '' }}>Oktober</option>
+                            <option value="11" {{ request('bulan') == '11' ? 'selected' : '' }}>November</option>
+                            <option value="12" {{ request('bulan') == '12' ? 'selected' : '' }}>Desember</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Tahun -->
+                    <div class="relative w-full sm:w-44 group animate-fade-in-down" style="animation-delay: 0.2s; animation-fill-mode: both;">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none z-10">
+                            <svg class="w-4.5 h-4.5 text-gray-400 group-focus-within:text-primary-blue group-focus-within:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <select name="tahun" onchange="this.form.submit()"
+                            class="w-full border border-transparent rounded-xl pl-10 pr-8 py-3 focus:outline-none focus:border-primary-blue/30 focus:ring-4 focus:ring-primary-blue/10 text-sm bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-bold text-gray-800 cursor-pointer appearance-none relative z-0">
+                            <option value="">Semua Tahun</option>
+                            @php $currentYear = date('Y'); @endphp
+                            @for ($i = $currentYear - 2; $i <= $currentYear + 1; $i++)
+                                <option value="{{ $i }}" {{ request('tahun') == $i ? 'selected' : '' }}>{{ $i }}</option>
+                            @endfor
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Devisi -->
+                    <div class="relative w-full sm:w-56 group animate-fade-in-down" style="animation-delay: 0.25s; animation-fill-mode: both;">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none z-10">
+                            <svg class="w-4.5 h-4.5 text-gray-400 group-focus-within:text-primary-blue group-focus-within:scale-110 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <select name="devisi" onchange="this.form.submit()"
+                            class="w-full border border-transparent rounded-xl pl-10 pr-8 py-3 focus:outline-none focus:border-primary-blue/30 focus:ring-4 focus:ring-primary-blue/10 text-sm bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-bold text-gray-800 cursor-pointer appearance-none relative z-0">
+                            <option value="">Semua Devisi</option>
+                            <option value="Semua Devisi" {{ request('devisi') == 'Semua Devisi' ? 'selected' : '' }}>Kegiatan Bersama</option>
+                            @foreach ($devisis as $dev)
+                                @continue(in_array(strtolower($dev->nama_devisi), ['pengurus inti', 'presidium inti']))
+                                <option value="{{ $dev->nama_devisi }}"
+                                    {{ request('devisi') == $dev->nama_devisi ? 'selected' : '' }}>{{ $dev->nama_devisi }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <div class="overflow-x-auto rounded-2xl border border-gray-100">
@@ -204,13 +270,13 @@
                                         </svg>
                                     </div>
                                     <p class="text-sm font-bold text-gray-600">
-                                        @if (request('search') || request('devisi'))
+                                        @if (request('search') || request('devisi') || request('bulan') || request('tahun'))
                                             Data kegiatan tidak ditemukan.
                                         @else
                                             Belum ada kegiatan terdaftar.
                                         @endif
                                     </p>
-                                    @if (request('search') || request('devisi'))
+                                    @if (request('search') || request('devisi') || request('bulan') || request('tahun'))
                                         <a href="{{ route('kegiatan') }}"
                                             class="text-xs text-primary-blue hover:underline mt-2">Hapus filter
                                             pencarian</a>
